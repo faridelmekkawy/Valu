@@ -16,6 +16,8 @@ const finalName = document.getElementById('finalName');
 const finalScore = document.getElementById('finalScore');
 const submitStatus = document.getElementById('submitStatus');
 const leaderboardEl = document.getElementById('leaderboard');
+const submitScoreBtn = document.getElementById('submitScoreBtn');
+const levelBanner = document.getElementById('levelBanner');
 
 const tileSize = 32;
 const mazeCols = canvas.width / tileSize;
@@ -75,6 +77,8 @@ let score = 0;
 let lives = 3;
 let playerName = 'Player';
 let speedBoostUntil = 0;
+let levelTransitionUntil = 0;
+let submittedThisRound = false;
 
 const particles = [];
 const coins = [];
@@ -82,9 +86,9 @@ const dots = [];
 const enemies = [];
 
 const LEVELS = [
-  { timeLimit: 60, enemyCount: 5, enemyMinSpeed: 65, enemyRange: 25 },
-  { timeLimit: 55, enemyCount: 7, enemyMinSpeed: 85, enemyRange: 35 },
-  { timeLimit: 50, enemyCount: 9, enemyMinSpeed: 105, enemyRange: 45 }
+  { timeLimit: 30, enemyCount: 5, enemyMinSpeed: 70, enemyRange: 30 },
+  { timeLimit: 30, enemyCount: 7, enemyMinSpeed: 95, enemyRange: 40 },
+  { timeLimit: 30, enemyCount: 9, enemyMinSpeed: 120, enemyRange: 55 }
 ];
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
@@ -250,6 +254,9 @@ function resetGame() {
   lives = 3;
   level = 1;
   speedBoostUntil = 0;
+  levelTransitionUntil = 0;
+  submittedThisRound = false;
+  submitScoreBtn.disabled = false;
   remainingTime = currentLevelConfig().timeLimit;
   setupLevel(true);
 }
@@ -259,11 +266,17 @@ function advanceLevel(now) {
     endGame(true);
     return;
   }
+
+  const completedLevel = level;
   level += 1;
   speedBoostUntil = 0;
   remainingTime = currentLevelConfig().timeLimit;
-  levelStartTime = now;
   setupLevel(false);
+
+  levelTransitionUntil = now + 1700;
+  levelStartTime = levelTransitionUntil;
+  levelBanner.textContent = `Level ${completedLevel} Completed!`;
+  levelBanner.classList.add('show');
 }
 
 function updateHud() {
@@ -506,19 +519,32 @@ function tick(ts) {
   if (gameState !== 'playing') return;
   const dt = Math.min(0.033, (ts - lastFrame) / 1000);
   lastFrame = ts;
-  remainingTime = currentLevelConfig().timeLimit - (ts - levelStartTime) / 1000;
-  if (remainingTime <= 0 || lives <= 0) {
-    endGame();
-    return;
+
+  const cfg = currentLevelConfig();
+  remainingTime = Math.min(cfg.timeLimit, cfg.timeLimit - (ts - levelStartTime) / 1000);
+
+  const inTransition = ts < levelTransitionUntil;
+  if (!inTransition) {
+    if (levelBanner.classList.contains('show')) levelBanner.classList.remove('show');
+    if (remainingTime <= 0) {
+      advanceLevel(ts);
+      requestAnimationFrame(tick);
+      return;
+    }
+
+    if (lives <= 0) {
+      endGame();
+      return;
+    }
+
+    if (Math.random() < 0.02) spawnCoin();
+
+    updatePlayer(dt, ts);
+    updateEnemies(dt, ts);
+    updateParticles(dt);
   }
 
-  if (Math.random() < 0.02) spawnCoin();
-
-  updatePlayer(dt, ts);
-  updateEnemies(dt, ts);
-  updateParticles(dt);
   updateHud();
-
   drawMaze(ts);
   drawDots();
   coins.forEach((coin) => drawCoin(coin, ts));
@@ -527,7 +553,7 @@ function tick(ts) {
   drawParticles();
   drawTouchIndicator();
 
-  if (dots.length === 0) advanceLevel(ts);
+  if (!inTransition && dots.length === 0) advanceLevel(ts);
 
   requestAnimationFrame(tick);
 }
@@ -548,8 +574,9 @@ function startGame() {
 }
 
 async function submitScore() {
-  if (!score) return;
+  if (!score || submittedThisRound) return;
   submitStatus.textContent = 'Submitting...';
+  submitScoreBtn.disabled = true;
   try {
     if (firestoreAvailable) {
       await db.addDoc(db.collection(db.ref, 'sparkie_dash_scores'), { name: playerName, score, createdAt: Date.now() });
@@ -558,10 +585,16 @@ async function submitScore() {
       local.push({ name: playerName, score, createdAt: Date.now() });
       localStorage.setItem('sparkie_dash_scores', JSON.stringify(local));
     }
-    submitStatus.textContent = 'Score submitted!';
+
+    submittedThisRound = true;
+    submitStatus.textContent = 'Score submitted! Returning to home...';
     await loadLeaderboard();
+    setTimeout(() => {
+      goHome(true);
+    }, 700);
   } catch (err) {
     submitStatus.textContent = 'Could not submit score.';
+    submitScoreBtn.disabled = false;
   }
 }
 
@@ -582,13 +615,26 @@ async function loadLeaderboard() {
   });
 }
 
+function goHome(reset = false) {
+  gameState = 'menu';
+  levelBanner.classList.remove('show');
+  levelBanner.textContent = '';
+  gameOverScreen.classList.remove('active');
+  startScreen.classList.add('active');
+  gameWrap.style.visibility = 'hidden';
+  submitStatus.textContent = '';
+  if (reset) resetGame();
+}
+
 function endGame(won = false) {
   gameState = 'over';
+  levelBanner.classList.remove('show');
   gameWrap.style.visibility = 'hidden';
   finalName.textContent = playerName;
   finalScore.textContent = String(score);
   gameOverScreen.classList.add('active');
   submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
+  submitScoreBtn.disabled = submittedThisRound;
   loadLeaderboard().catch(() => {});
 }
 
@@ -636,11 +682,9 @@ canvas.addEventListener('pointerleave', stopTouch);
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('playAgainBtn').addEventListener('click', () => {
-  gameOverScreen.classList.remove('active');
-  startScreen.classList.add('active');
-  gameWrap.style.visibility = 'hidden';
+  goHome(true);
 });
-document.getElementById('submitScoreBtn').addEventListener('click', submitScore);
+submitScoreBtn.addEventListener('click', submitScore);
 
 initFirebase();
 loadLeaderboard().catch(() => {});
