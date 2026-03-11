@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkie Dash: Perfect Stop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <img id="topLogo" class="brand-logo" src="../assets/Valu_Logo.png" alt="Valu logo" />
+
+    <section id="startScreen" class="screen active">
+      <img id="sparkieLogo" class="sparkie-logo" src="../assets/sparkie_logo.png" alt="Sparkie Dash logo" />
+      <h1>Sparkie Dash</h1>
+      <p class="subtitle">Perfect Stop</p>
+      <p class="instruction">Stop Sparkie in the perfect zone</p>
+      <button id="startBtn" class="cta">Start Run</button>
+      <p class="control-help">Controls: SPACE · ENTER · CLICK · TAP</p>
+    </section>
+
+    <section id="gameScreen" class="screen" aria-label="Sparkie Dash game screen">
+      <div class="hud">
+        <div class="pill">Score <strong id="score">0</strong></div>
+        <div class="pill">Best <strong id="best">0</strong></div>
+        <div class="pill">Round <strong id="round">1</strong></div>
+        <div class="pill">Streak <strong id="streak">0</strong></div>
+      </div>
+
+      <div id="track" class="track" role="button" tabindex="0" aria-label="Press to stop Sparkie">
+        <div id="goodZone" class="zone good-zone"></div>
+        <div id="perfectZone" class="zone perfect-zone"></div>
+        <div class="track-shine"></div>
+        <div id="sparkie" class="sparkie-runner">
+          <img id="sparkieImg" src="../assets/sparkie_player.png" alt="Sparkie runner" />
+        </div>
+      </div>
+
+      <p class="action-hint">Hit STOP at the perfect moment!</p>
+      <button id="stopBtn" class="cta stop-btn">STOP</button>
+    </section>
+
+    <section id="resultOverlay" class="overlay" aria-live="polite">
+      <div class="result-card">
+        <h2 id="resultText">PERFECT</h2>
+        <p id="resultPoints">+100 points</p>
+        <div class="reward-wrap">
+          <img id="rewardIcon" src="../assets/coins/coin_token.png" alt="Reward coin" />
+          <div id="rewardFallback" class="reward-fallback" hidden></div>
+        </div>
+        <div class="button-row">
+          <button id="nextBtn" class="cta">Next Round</button>
+          <button id="restartBtn" class="cta ghost">Restart</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
