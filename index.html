@@ -3,57 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sparkie Dash</title>
+  <title>Sparkie Jackpot | /runner</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
-    <header class="hud-shell">
-      <img id="brandLogo" src="assets/Value-Logo.png" alt="Sparkie logo" />
-      <div class="hud" aria-live="polite">
-        <span>Score: <strong id="scoreValue">0</strong></span>
-        <span>Time: <strong id="timerValue">90</strong>s</span>
-        <span>Lives: <strong id="livesValue">3</strong></span>
-        <span>Player: <strong id="nameValue">---</strong></span>
+  <main class="runner-page" data-route="/runner">
+    <section id="startScreen" class="screen card active" aria-label="Start Sparkie Jackpot">
+      <img id="startLogo" class="brand-logo" src="assets/Value_Logo.png" alt="Sparkie logo" />
+      <h1>Sparkie Jackpot</h1>
+      <p class="tagline">Spin the reels, chase the glow, hit the SUPER JACKPOT.</p>
+
+      <label for="playerNameInput">Player Name</label>
+      <input id="playerNameInput" maxlength="20" autocomplete="off" placeholder="Enter your name" />
+      <button id="startBtn" class="primary-btn">Start</button>
+      <p class="helper">Tip: Press <strong>Enter</strong> to start.</p>
+    </section>
+
+    <section id="gameScreen" class="screen card" aria-label="Sparkie Jackpot machine">
+      <img id="gameLogo" class="brand-logo" src="assets/Value_Logo.png" alt="Sparkie logo" />
+
+      <div class="top-hud">
+        <div class="pill"><span>Player</span><strong id="playerNameView">---</strong></div>
+        <div class="pill"><span>Total Score</span><strong id="totalScoreView">0</strong></div>
+        <div class="pill"><span>Best</span><strong id="bestScoreView">0</strong></div>
+        <div class="pill"><span>Spins</span><strong id="spinCountView">0</strong></div>
       </div>
-      <div class="coin-legend" id="coinLegend"></div>
-    </header>
 
-    <main>
-      <section id="startScreen" class="panel active">
-        <img class="start-logo" src="assets/Value-Logo.png" alt="Sparkie" />
-        <h1>Sparkie Dash</h1>
-        <p class="subtitle">Start in the glowing START ZONE, chase coins, and dodge rogue sparks.</p>
-        <label for="playerName">Gamer Tag</label>
-        <input id="playerName" maxlength="16" placeholder="Enter your name" />
-        <button id="startBtn">Start Game</button>
-        <ul>
-          <li>Move with <strong>Arrow Keys</strong> or <strong>WASD</strong>.</li>
-          <li>On touch devices: <strong>swipe anywhere on the game</strong> to move.</li>
-          <li>Collect Heart (+10), Wink (+30 speed), Card (+50), Token (+100).</li>
-          <li>Survive 90 seconds with 3 lives.</li>
-        </ul>
-      </section>
+      <img id="sparkieDecor" class="sparkie-decor" src="assets/sparkie_player.png" alt="Sparkie mascot" />
 
-      <section id="gameWrap" class="game-wrap" aria-label="Sparkie Dash game area">
-        <canvas id="gameCanvas" width="960" height="640"></canvas>
-      </section>
+      <div id="slotMachine" class="slot-machine" role="group" aria-label="Slot reels">
+        <div class="reel" data-reel="0"><div class="symbol-shell"><img class="symbol-img" alt="Reel symbol" /></div></div>
+        <div class="reel" data-reel="1"><div class="symbol-shell"><img class="symbol-img" alt="Reel symbol" /></div></div>
+        <div class="reel" data-reel="2"><div class="symbol-shell"><img class="symbol-img" alt="Reel symbol" /></div></div>
+      </div>
 
-      <section id="gameOverScreen" class="panel">
-        <h2>Game Over</h2>
-        <p><span id="finalName">Player</span>, your final score is:</p>
-        <p id="finalScore">0</p>
-        <div class="button-row">
-          <button id="submitScoreBtn">Submit Score</button>
-          <button id="playAgainBtn">Play Again</button>
-        </div>
-        <p id="submitStatus"></p>
-        <h3>Top Sparks</h3>
-        <ol id="leaderboard"></ol>
-      </section>
-    </main>
-  </div>
+      <button id="spinBtn" class="primary-btn spin-btn">SPIN</button>
 
-  <script type="module" src="game.js"></script>
+      <p id="resultMessage" class="result">Ready to spin!</p>
+    </section>
+
+    <div id="resultOverlay" class="result-overlay" aria-live="polite" aria-hidden="true">
+      <div id="overlayText" class="overlay-text">+0</div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
 </body>
 </html>
