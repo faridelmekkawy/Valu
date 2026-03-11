@@ -5,6 +5,7 @@ const scoreValue = document.getElementById('scoreValue');
 const timerValue = document.getElementById('timerValue');
 const livesValue = document.getElementById('livesValue');
 const nameValue = document.getElementById('nameValue');
+const coinLegend = document.getElementById('coinLegend');
 
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
@@ -18,6 +19,7 @@ const leaderboardEl = document.getElementById('leaderboard');
 const tileSize = 32;
 const mazeCols = canvas.width / tileSize;
 const mazeRows = canvas.height / tileSize;
+const START_TILE = { col: 1, row: 1 };
 
 const mazeLayout = [
   '111111111111111111111111111111',
@@ -43,9 +45,10 @@ const mazeLayout = [
 ];
 
 const coinDefs = {
-  heart: { value: 10, rate: 0.65, speedBoost: 0, img: 'assets/coins/coin_heart.png' },
-  wink: { value: 30, rate: 0.28, speedBoost: 3.5, img: 'assets/coins/coin_wink.png' },
-  token: { value: 100, rate: 0.07, speedBoost: 0, img: 'assets/coins/coin_token.png' }
+  heart: { value: 10, rate: 0.52, img: 'assets/coins/coin_heart.png', color: '#57beb1' },
+  wink: { value: 30, rate: 0.23, speedBoost: 3.5, img: 'assets/coins/coin_wink.png', color: '#7bf0df' },
+  card: { value: 50, rate: 0.18, img: 'assets/coins/coin_card.png', color: '#81d8ce' },
+  token: { value: 100, rate: 0.07, img: 'assets/coins/coin_token.png', color: '#ef5f17' }
 };
 
 const assets = {
@@ -54,11 +57,13 @@ const assets = {
   coins: {
     heart: loadImage(coinDefs.heart.img),
     wink: loadImage(coinDefs.wink.img),
+    card: loadImage(coinDefs.card.img),
     token: loadImage(coinDefs.token.img)
   }
 };
 
 const keys = new Set();
+const touchControl = { active: false, dx: 0, dy: 0, startX: 0, startY: 0 };
 let gameState = 'menu';
 let gameStartTime = 0;
 let lastFrame = 0;
@@ -72,22 +77,9 @@ const particles = [];
 const coins = [];
 const enemies = [];
 
-const player = {
-  x: tileSize * 1.5,
-  y: tileSize * 1.5,
-  r: tileSize * 0.38,
-  vx: 0,
-  vy: 0,
-  angle: 0,
-  invulnerableUntil: 0
-};
+const player = { x: 0, y: 0, r: tileSize * 0.45, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
-const firebaseConfig = {
-  apiKey: 'REPLACE_ME',
-  authDomain: 'REPLACE_ME',
-  projectId: 'REPLACE_ME'
-};
-
+const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
 let db = null;
 let firestoreAvailable = false;
 
@@ -99,18 +91,10 @@ async function initFirebase() {
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
     ]);
     const app = initializeApp(firebaseConfig);
-    db = {
-      ref: getFirestore(app),
-      collection,
-      addDoc,
-      query,
-      orderBy,
-      limit,
-      getDocs
-    };
+    db = { ref: getFirestore(app), collection, addDoc, query, orderBy, limit, getDocs };
     firestoreAvailable = true;
   } catch (err) {
-    console.warn('Firestore unavailable, leaderboard fallback enabled.', err);
+    console.warn('Firestore unavailable, using local leaderboard fallback.', err);
   }
 }
 
@@ -120,10 +104,35 @@ function loadImage(src) {
   img.onload = () => { ok = true; };
   img.onerror = () => { ok = false; };
   img.src = src;
-  return {
-    img,
-    loaded: () => ok
-  };
+  return { img, loaded: () => ok };
+}
+
+function buildCoinLegend() {
+  const defs = [
+    ['heart', '+10'],
+    ['wink', '+30 speed'],
+    ['card', '+50'],
+    ['token', '+100']
+  ];
+  defs.forEach(([type, label]) => {
+    const chip = document.createElement('div');
+    chip.className = 'coin-chip';
+    const img = document.createElement('img');
+    img.src = assets.coins[type].img.src;
+    img.alt = type;
+    const dot = document.createElement('span');
+    dot.className = 'fallback';
+    dot.style.background = coinDefs[type].color;
+    img.onerror = () => {
+      if (img.parentNode) img.remove();
+      chip.prepend(dot);
+    };
+    chip.appendChild(img);
+    const text = document.createElement('span');
+    text.textContent = `${type.toUpperCase()} ${label}`;
+    chip.appendChild(text);
+    coinLegend.appendChild(chip);
+  });
 }
 
 function isWall(col, row) {
@@ -144,39 +153,39 @@ function hitWallCircle(x, y, radius) {
   return false;
 }
 
+function startPosition() {
+  return { x: START_TILE.col * tileSize + tileSize / 2, y: START_TILE.row * tileSize + tileSize / 2 };
+}
+
 function randomOpenPosition() {
   while (true) {
     const col = Math.floor(Math.random() * mazeCols);
     const row = Math.floor(Math.random() * mazeRows);
-    if (!isWall(col, row)) {
-      return {
-        x: col * tileSize + tileSize / 2,
-        y: row * tileSize + tileSize / 2
-      };
+    if (!isWall(col, row) && (Math.abs(col - START_TILE.col) > 2 || Math.abs(row - START_TILE.row) > 2)) {
+      return { x: col * tileSize + tileSize / 2, y: row * tileSize + tileSize / 2 };
     }
   }
 }
 
 function spawnCoin() {
   if (coins.length > 18) return;
-  const pick = Math.random();
-  const type = pick < coinDefs.heart.rate ? 'heart' : pick < coinDefs.heart.rate + coinDefs.wink.rate ? 'wink' : 'token';
+  const roll = Math.random();
+  let sum = 0;
+  let type = 'heart';
+  for (const key of Object.keys(coinDefs)) {
+    sum += coinDefs[key].rate;
+    if (roll <= sum) {
+      type = key;
+      break;
+    }
+  }
   const pos = randomOpenPosition();
   coins.push({ type, x: pos.x, y: pos.y, t: Math.random() * Math.PI * 2 });
 }
 
 function spawnEnemy() {
   const pos = randomOpenPosition();
-  enemies.push({
-    x: pos.x,
-    y: pos.y,
-    r: tileSize * 0.34,
-    vx: 0,
-    vy: 0,
-    speed: 70 + Math.random() * 35,
-    turnAt: 0,
-    style: Math.random() > 0.5 ? 'blob' : 'spark'
-  });
+  enemies.push({ x: pos.x, y: pos.y, r: tileSize * 0.38, vx: 0, vy: 0, speed: 70 + Math.random() * 35, turnAt: 0, style: Math.random() > 0.5 ? 'blob' : 'spark' });
 }
 
 function resetGame() {
@@ -188,13 +197,13 @@ function resetGame() {
   coins.length = 0;
   enemies.length = 0;
 
-  const startPos = randomOpenPosition();
-  player.x = startPos.x;
-  player.y = startPos.y;
+  const p = startPosition();
+  player.x = p.x;
+  player.y = p.y;
   player.vx = 0;
   player.vy = 0;
   player.angle = 0;
-  player.invulnerableUntil = 0;
+  player.invulnerableUntil = performance.now() + 1200;
 
   for (let i = 0; i < 12; i++) spawnCoin();
   for (let i = 0; i < 5; i++) spawnEnemy();
@@ -210,53 +219,58 @@ function updateHud() {
 }
 
 function collectCoin(index) {
-  const coin = coins[index];
-  score += coinDefs[coin.type].value;
-  if (coin.type === 'wink') speedBoostUntil = performance.now() + 4500;
-  const color = coin.type === 'token' ? '#ef5f17' : '#57beb1';
-  for (let i = 0; i < 12; i++) {
-    particles.push({ x: coin.x, y: coin.y, vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120, life: 0.6, color });
+  const c = coins[index];
+  score += coinDefs[c.type].value;
+  if (c.type === 'wink') speedBoostUntil = performance.now() + 4500;
+  for (let i = 0; i < 13; i++) {
+    particles.push({ x: c.x, y: c.y, vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120, life: 0.65, color: coinDefs[c.type].color });
   }
   coins.splice(index, 1);
   spawnCoin();
 }
 
-function updatePlayer(dt, now) {
-  const speed = now < speedBoostUntil ? 220 : 170;
+function getInputDirection() {
   let dx = 0;
   let dy = 0;
   if (keys.has('ArrowLeft') || keys.has('a')) dx -= 1;
   if (keys.has('ArrowRight') || keys.has('d')) dx += 1;
   if (keys.has('ArrowUp') || keys.has('w')) dy -= 1;
   if (keys.has('ArrowDown') || keys.has('s')) dy += 1;
+  if (touchControl.active) {
+    dx += touchControl.dx;
+    dy += touchControl.dy;
+  }
+  return { dx, dy };
+}
 
-  const len = Math.hypot(dx, dy) || 1;
-  player.vx = (dx / len) * speed;
-  player.vy = (dy / len) * speed;
+function updatePlayer(dt, now) {
+  const speed = now < speedBoostUntil ? 250 : 185;
+  const dir = getInputDirection();
+  const len = Math.hypot(dir.dx, dir.dy) || 1;
+  player.vx = (dir.dx / len) * speed;
+  player.vy = (dir.dy / len) * speed;
 
-  const nextX = player.x + player.vx * dt;
-  const nextY = player.y + player.vy * dt;
-
-  if (!hitWallCircle(nextX, player.y, player.r)) player.x = nextX;
-  if (!hitWallCircle(player.x, nextY, player.r)) player.y = nextY;
-
-  if (dx || dy) player.angle = Math.atan2(dy, dx);
+  const nx = player.x + player.vx * dt;
+  const ny = player.y + player.vy * dt;
+  if (!hitWallCircle(nx, player.y, player.r)) player.x = nx;
+  if (!hitWallCircle(player.x, ny, player.r)) player.y = ny;
+  if (dir.dx || dir.dy) player.angle = Math.atan2(dir.dy, dir.dx);
 
   for (let i = coins.length - 1; i >= 0; i--) {
-    const c = coins[i];
-    if (Math.hypot(player.x - c.x, player.y - c.y) < player.r + tileSize * 0.28) collectCoin(i);
+    if (Math.hypot(player.x - coins[i].x, player.y - coins[i].y) < player.r + tileSize * 0.36) collectCoin(i);
   }
 
   if (now > player.invulnerableUntil) {
-    enemies.forEach((e) => {
+    for (const e of enemies) {
       if (Math.hypot(player.x - e.x, player.y - e.y) < player.r + e.r) {
         lives -= 1;
         player.invulnerableUntil = now + 2000;
-        const p = randomOpenPosition();
+        const p = startPosition();
         player.x = p.x;
         player.y = p.y;
+        break;
       }
-    });
+    }
   }
 }
 
@@ -265,15 +279,14 @@ function updateEnemies(dt, now) {
     if (now > e.turnAt || (Math.abs(e.vx) < 1 && Math.abs(e.vy) < 1)) {
       const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random() - 0.5);
       for (const [dx, dy] of dirs) {
-        if (!hitWallCircle(e.x + dx * tileSize * 0.7, e.y + dy * tileSize * 0.7, e.r)) {
+        if (!hitWallCircle(e.x + dx * tileSize * 0.8, e.y + dy * tileSize * 0.8, e.r)) {
           e.vx = dx * e.speed;
           e.vy = dy * e.speed;
-          e.turnAt = now + 600 + Math.random() * 1100;
+          e.turnAt = now + 500 + Math.random() * 1200;
           break;
         }
       }
     }
-
     const nx = e.x + e.vx * dt;
     const ny = e.y + e.vy * dt;
     if (!hitWallCircle(nx, e.y, e.r)) e.x = nx; else e.vx *= -1;
@@ -293,10 +306,9 @@ function updateParticles(dt) {
   }
 }
 
-function drawMaze() {
+function drawMaze(now) {
   ctx.fillStyle = '#111';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   for (let row = 0; row < mazeRows; row++) {
     for (let col = 0; col < mazeCols; col++) {
       if (mazeLayout[row][col] === '1') {
@@ -304,36 +316,46 @@ function drawMaze() {
         const y = row * tileSize;
         ctx.fillStyle = '#1d3e3a';
         ctx.fillRect(x, y, tileSize, tileSize);
-        ctx.strokeStyle = 'rgba(87,190,177,0.6)';
+        ctx.strokeStyle = 'rgba(87,190,177,0.65)';
         ctx.lineWidth = 2;
         ctx.strokeRect(x + 1.5, y + 1.5, tileSize - 3, tileSize - 3);
       }
     }
   }
+
+  const sx = START_TILE.col * tileSize;
+  const sy = START_TILE.row * tileSize;
+  ctx.save();
+  ctx.fillStyle = 'rgba(87,190,177,0.16)';
+  ctx.fillRect(sx - 2, sy - 2, tileSize * 2 + 4, tileSize * 2 + 4);
+  ctx.strokeStyle = '#57beb1';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(sx - 1, sy - 1, tileSize * 2 + 2, tileSize * 2 + 2);
+  ctx.fillStyle = '#d6fff9';
+  ctx.font = 'bold 12px Segoe UI';
+  ctx.fillText('START', sx + 8, sy + tileSize * 2 + 13 + Math.sin(now / 180) * 1.5);
+  ctx.restore();
 }
 
-function drawCoins(now) {
-  for (const c of coins) {
-    const pulse = 1 + Math.sin(now / 260 + c.t) * 0.06;
-    const bob = Math.sin(now / 310 + c.t) * 3;
-    const size = tileSize * (c.type === 'token' ? 0.62 : 0.52) * pulse;
-
-    ctx.save();
-    ctx.translate(c.x, c.y + bob);
-    ctx.rotate(now / 950 + c.t);
-    const img = assets.coins[c.type];
-    if (img.loaded()) {
-      ctx.shadowBlur = c.type === 'token' ? 18 : 9;
-      ctx.shadowColor = c.type === 'token' ? '#ef5f17' : '#57beb1';
-      ctx.drawImage(img.img, -size / 2, -size / 2, size, size);
-    } else {
-      ctx.fillStyle = c.type === 'token' ? '#ef5f17' : '#57beb1';
-      ctx.beginPath();
-      ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
+function drawCoin(coin, now) {
+  const bob = Math.sin(now / 300 + coin.t) * 3.5;
+  const pulse = 1 + Math.sin(now / 240 + coin.t) * 0.08;
+  const size = tileSize * (coin.type === 'token' ? 0.86 : 0.76) * pulse;
+  ctx.save();
+  ctx.translate(coin.x, coin.y + bob);
+  ctx.rotate(now / 900 + coin.t);
+  const image = assets.coins[coin.type];
+  if (image.loaded()) {
+    ctx.shadowBlur = coin.type === 'token' ? 20 : 11;
+    ctx.shadowColor = coinDefs[coin.type].color;
+    ctx.drawImage(image.img, -size / 2, -size / 2, size, size);
+  } else {
+    ctx.fillStyle = coinDefs[coin.type].color;
+    ctx.beginPath();
+    ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+    ctx.fill();
   }
+  ctx.restore();
 }
 
 function drawEnemies(now) {
@@ -356,7 +378,7 @@ function drawEnemies(now) {
         ctx.rotate(Math.PI / 2);
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(e.r + 4, 0);
+        ctx.lineTo(e.r + 6, 0);
         ctx.stroke();
       }
       ctx.fillStyle = '#1e1e1e';
@@ -369,16 +391,16 @@ function drawEnemies(now) {
 }
 
 function drawPlayer(now) {
-  const bounce = Math.sin(now / 120) * 2;
-  const invulnerable = now < player.invulnerableUntil;
-
+  const bounce = Math.sin(now / 110) * 2.4;
+  const inv = now < player.invulnerableUntil;
   ctx.save();
   ctx.translate(player.x, player.y + bounce);
-  ctx.rotate(player.angle * 0.2);
-  ctx.globalAlpha = invulnerable ? 0.55 + Math.sin(now / 80) * 0.25 : 1;
-
-  const size = tileSize * 0.95;
+  ctx.rotate(player.angle * 0.25);
+  ctx.globalAlpha = inv ? 0.58 + Math.sin(now / 80) * 0.25 : 1;
+  const size = tileSize * 1.2;
   if (assets.player.loaded()) {
+    ctx.shadowBlur = 11;
+    ctx.shadowColor = '#ef5f17';
     ctx.drawImage(assets.player.img, -size / 2, -size / 2, size, size);
   } else {
     ctx.fillStyle = '#ef5f17';
@@ -386,12 +408,11 @@ function drawPlayer(now) {
     ctx.arc(0, 0, player.r, 0, Math.PI * 2);
     ctx.fill();
   }
-
   if (now < speedBoostUntil) {
     ctx.strokeStyle = 'rgba(87,190,177,0.8)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, player.r + 4, 0, Math.PI * 2);
+    ctx.arc(0, 0, player.r + 6, 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.restore();
@@ -401,18 +422,31 @@ function drawParticles() {
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, p.life * 1.4);
     ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, 3, 3);
+    ctx.fillRect(p.x, p.y, 4, 4);
   }
   ctx.globalAlpha = 1;
 }
 
+function drawTouchIndicator() {
+  if (!touchControl.active) return;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(87,190,177,0.65)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(touchControl.startX, touchControl.startY, 26, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(touchControl.startX, touchControl.startY);
+  ctx.lineTo(touchControl.startX + touchControl.dx * 38, touchControl.startY + touchControl.dy * 38);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function tick(ts) {
   if (gameState !== 'playing') return;
-  const now = ts;
   const dt = Math.min(0.033, (ts - lastFrame) / 1000);
   lastFrame = ts;
-
-  remainingTime = 90 - (now - gameStartTime) / 1000;
+  remainingTime = 90 - (ts - gameStartTime) / 1000;
   if (remainingTime <= 0 || lives <= 0) {
     endGame();
     return;
@@ -420,16 +454,17 @@ function tick(ts) {
 
   if (Math.random() < 0.02) spawnCoin();
 
-  updatePlayer(dt, now);
-  updateEnemies(dt, now);
+  updatePlayer(dt, ts);
+  updateEnemies(dt, ts);
   updateParticles(dt);
   updateHud();
 
-  drawMaze();
-  drawCoins(now);
-  drawEnemies(now);
-  drawPlayer(now);
+  drawMaze(ts);
+  coins.forEach((coin) => drawCoin(coin, ts));
+  drawEnemies(ts);
+  drawPlayer(ts);
   drawParticles();
+  drawTouchIndicator();
 
   requestAnimationFrame(tick);
 }
@@ -440,11 +475,9 @@ function startGame() {
   submitStatus.textContent = '';
   leaderboardEl.innerHTML = '';
   resetGame();
-
   startScreen.classList.remove('active');
   gameOverScreen.classList.remove('active');
   gameWrap.style.visibility = 'visible';
-
   gameState = 'playing';
   gameStartTime = performance.now();
   lastFrame = gameStartTime;
@@ -456,8 +489,7 @@ async function submitScore() {
   submitStatus.textContent = 'Submitting...';
   try {
     if (firestoreAvailable) {
-      const payload = { name: playerName, score, createdAt: Date.now() };
-      await db.addDoc(db.collection(db.ref, 'sparkie_dash_scores'), payload);
+      await db.addDoc(db.collection(db.ref, 'sparkie_dash_scores'), { name: playerName, score, createdAt: Date.now() });
     } else {
       const local = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]');
       local.push({ name: playerName, score, createdAt: Date.now() });
@@ -477,11 +509,8 @@ async function loadLeaderboard() {
     const snap = await db.getDocs(q);
     scores = snap.docs.map((d) => d.data());
   } else {
-    scores = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]')
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 7);
+    scores = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]').sort((a, b) => b.score - a.score).slice(0, 7);
   }
-
   leaderboardEl.innerHTML = '';
   scores.forEach((s) => {
     const li = document.createElement('li');
@@ -509,6 +538,38 @@ document.addEventListener('keyup', (e) => {
   keys.delete(key);
 });
 
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+  touchControl.active = true;
+  touchControl.startX = e.offsetX;
+  touchControl.startY = e.offsetY;
+  touchControl.dx = 0;
+  touchControl.dy = 0;
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!touchControl.active) return;
+  const dx = e.offsetX - touchControl.startX;
+  const dy = e.offsetY - touchControl.startY;
+  const len = Math.hypot(dx, dy);
+  if (len < 8) {
+    touchControl.dx = 0;
+    touchControl.dy = 0;
+    return;
+  }
+  touchControl.dx = dx / len;
+  touchControl.dy = dy / len;
+});
+
+const stopTouch = () => {
+  touchControl.active = false;
+  touchControl.dx = 0;
+  touchControl.dy = 0;
+};
+canvas.addEventListener('pointerup', stopTouch);
+canvas.addEventListener('pointercancel', stopTouch);
+canvas.addEventListener('pointerleave', stopTouch);
+
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('playAgainBtn').addEventListener('click', () => {
   gameOverScreen.classList.remove('active');
@@ -519,3 +580,4 @@ document.getElementById('submitScoreBtn').addEventListener('click', submitScore)
 
 initFirebase();
 loadLeaderboard().catch(() => {});
+buildCoinLegend();

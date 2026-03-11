@@ -11,6 +11,12 @@ Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla J
 2. Open `http://localhost:8080`.
 3. Enter a gamer tag and press **Start Game**.
 
+## Controls
+
+- Keyboard: Arrow keys or WASD.
+- Touch: swipe on the game canvas to move in the swipe direction.
+- The player always respawns in the glowing **START** area for clear orientation.
+
 ## Replace assets
 
 - Player sprite: `assets/sparkie_player.png`
@@ -18,6 +24,7 @@ Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla J
 - Coins:
   - `assets/coins/coin_heart.png`
   - `assets/coins/coin_wink.png`
+  - `assets/coins/coin_card.png`
   - `assets/coins/coin_token.png`
 
 Keep the same file names to avoid code changes. If any image is missing, the game renders fallback placeholder shapes.
