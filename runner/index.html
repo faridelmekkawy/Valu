@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkie Jackpot | /runner</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="runner-page" data-route="/runner">
+    <section id="startScreen" class="screen card active">
+      <img id="startLogo" class="brand-logo" src="../assets/Value-Logo.png" alt="Value Logo" />
+      <h1>Sparkie Jackpot</h1>
+      <p class="tagline">Las Vegas vibes. Big lights. Bigger spins.</p>
+
+      <div class="start-options">
+        <img id="startSparkie" class="sparkie-option" src="../assets/sparkie_player.png" alt="Sparkie" />
+        <div class="start-form">
+          <label for="playerNameInput">Player Name</label>
+          <input id="playerNameInput" maxlength="20" autocomplete="off" placeholder="Enter your name" />
+          <button id="startBtn" class="primary-btn">START JACKPOT</button>
+          <p class="helper">Press <strong>Enter</strong> to start. Press <strong>Space</strong> to spin in game.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen card">
+      <img id="gameLogo" class="brand-logo" src="../assets/Value-Logo.png" alt="Value Logo" />
+
+      <div class="top-hud">
+        <div class="pill"><span>Player</span><strong id="playerNameView">---</strong></div>
+        <div class="pill"><span>Total Score</span><strong id="totalScoreView">0</strong></div>
+        <div class="pill"><span>Best</span><strong id="bestScoreView">0</strong></div>
+        <div class="pill"><span>Spins</span><strong id="spinCountView">0</strong></div>
+      </div>
+
+      <div id="slotMachine" class="slot-machine" role="group" aria-label="Slot reels">
+        <div class="reel" data-reel="0"><div class="reel-track"></div></div>
+        <div class="reel" data-reel="1"><div class="reel-track"></div></div>
+        <div class="reel" data-reel="2"><div class="reel-track"></div></div>
+      </div>
+
+      <img id="sparkieDecor" class="sparkie-decor" src="../assets/sparkie_player.png" alt="Sparkie mascot" />
+
+      <button id="spinBtn" class="primary-btn spin-btn">SPIN</button>
+      <p id="resultMessage" class="result">Ready to spin!</p>
+    </section>
+
+    <div id="resultOverlay" class="result-overlay" aria-live="polite" aria-hidden="true">
+      <div id="overlayText" class="overlay-text">+0</div>
+    </div>
+  </main>
+
+  <script src="./game.js"></script>
+</body>
+</html>
