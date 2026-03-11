@@ -1,61 +1,63 @@
-:root {
+/* Fully scoped styles to avoid collisions with host app CSS. */
+#sparkieDashRunner.sd-root {
   --orange: #EF5F17;
   --teal: #57BEB1;
   --bg: #1E1E1E;
   --text: #F8F9FB;
   --panel: #262626;
-}
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
   min-height: 100vh;
-  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 20px;
+  display: grid;
+  place-items: center;
   color: var(--text);
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
   background:
     radial-gradient(circle at 20% 15%, rgba(87, 190, 177, 0.2), transparent 30%),
     radial-gradient(circle at 82% 10%, rgba(239, 95, 23, 0.2), transparent 35%),
     var(--bg);
-  display: grid;
-  place-items: center;
 }
 
-.page-shell {
-  width: min(980px, 94vw);
+#sparkieDashRunner * { box-sizing: border-box; }
+
+#sparkieDashRunner .sd-shell {
+  width: min(980px, 100%);
   padding: 20px;
   border-radius: 26px;
   border: 2px solid rgba(87, 190, 177, 0.5);
-  background: linear-gradient(180deg, rgba(40, 40, 40, 0.9), rgba(24, 24, 24, 0.95));
+  background: linear-gradient(180deg, rgba(40, 40, 40, 0.92), rgba(24, 24, 24, 0.96));
   box-shadow: 0 0 28px rgba(87, 190, 177, 0.15), inset 0 0 30px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
 }
 
-.brand-logo {
+#sparkieDashRunner .sd-brand-logo {
   display: block;
   margin: 4px auto 18px;
   width: min(300px, 70%);
+  max-width: 300px;
   max-height: 84px;
   object-fit: contain;
   filter: drop-shadow(0 0 10px rgba(87, 190, 177, 0.4));
 }
 
-.screen { display: none; }
-.screen.active { display: block; }
+#sparkieDashRunner .sd-screen { display: none; }
+#sparkieDashRunner .sd-screen.sd-active { display: block; }
 
-#startScreen {
+#sparkieDashRunner #startScreen {
   text-align: center;
   padding: 18px;
 }
 
-.sparkie-logo {
+#sparkieDashRunner .sd-sparkie-logo {
   width: min(380px, 74%);
+  max-width: 380px;
   max-height: 100px;
   object-fit: contain;
 }
 
-h1 {
+#sparkieDashRunner .sd-title {
   margin: 12px 0 6px;
   font-size: clamp(2rem, 4vw, 3rem);
   color: var(--orange);
@@ -63,17 +65,17 @@ h1 {
   text-shadow: 0 0 12px rgba(239, 95, 23, 0.5);
 }
 
-.subtitle {
+#sparkieDashRunner .sd-subtitle {
   margin: 0 0 8px;
   color: var(--teal);
   font-weight: 800;
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
 }
 
-.instruction { font-size: 1.05rem; margin-bottom: 18px; }
-.control-help { color: #d0f1ed; margin-top: 12px; }
+#sparkieDashRunner .sd-instruction { font-size: 1.05rem; margin-bottom: 18px; }
+#sparkieDashRunner .sd-control-help { color: #d0f1ed; margin-top: 12px; }
 
-.hud {
+#sparkieDashRunner .sd-hud {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
@@ -81,7 +83,7 @@ h1 {
   margin-bottom: 18px;
 }
 
-.pill {
+#sparkieDashRunner .sd-pill {
   background: #111;
   border: 1px solid rgba(87, 190, 177, 0.65);
   border-radius: 999px;
@@ -92,11 +94,10 @@ h1 {
   box-shadow: 0 0 12px rgba(87, 190, 177, 0.2);
 }
 
-.track {
+#sparkieDashRunner .sd-track {
   position: relative;
   width: 100%;
-  height: min(190px, 28vw);
-  min-height: 135px;
+  height: clamp(140px, 26vw, 210px);
   border-radius: 20px;
   background:
     linear-gradient(180deg, rgba(87, 190, 177, 0.12), transparent 35%),
@@ -106,7 +107,7 @@ h1 {
   box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.55), 0 0 18px rgba(239, 95, 23, 0.2);
 }
 
-.zone {
+#sparkieDashRunner .sd-zone {
   position: absolute;
   top: 14%;
   height: 72%;
@@ -114,48 +115,56 @@ h1 {
   transform: translateX(-50%);
 }
 
-.good-zone {
+#sparkieDashRunner .sd-good-zone {
   width: 18%;
   border: 2px dashed rgba(87, 190, 177, 0.95);
   background: rgba(87, 190, 177, 0.15);
   box-shadow: 0 0 24px rgba(87, 190, 177, 0.45);
 }
 
-.perfect-zone {
+#sparkieDashRunner .sd-perfect-zone {
   width: 6%;
   border: 2px solid rgba(239, 95, 23, 0.95);
   background: rgba(239, 95, 23, 0.35);
   box-shadow: 0 0 18px rgba(239, 95, 23, 0.7);
 }
 
-.track-shine {
+#sparkieDashRunner .sd-track-shine {
   position: absolute;
   inset: 0;
   background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.08) 48%, transparent 60%);
-  animation: shine 2.4s linear infinite;
+  animation: sd-shine 2.4s linear infinite;
   pointer-events: none;
 }
 
-.sparkie-runner {
+#sparkieDashRunner .sd-sparkie-runner {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 84px;
-  height: 84px;
+  width: 84px !important;
+  height: 84px !important;
+  min-width: 84px;
+  min-height: 84px;
   display: grid;
   place-items: center;
   transition: filter 180ms ease;
+  z-index: 2;
 }
 
-.sparkie-runner img {
-  width: 84px;
-  height: 84px;
+#sparkieDashRunner .sd-sparkie-img {
+  width: 84px !important;
+  height: 84px !important;
+  min-width: 84px;
+  min-height: 84px;
+  max-width: 84px;
+  max-height: 84px;
   object-fit: contain;
+  display: block;
   filter: drop-shadow(0 0 16px rgba(239, 95, 23, 0.45));
 }
 
-.sparkie-runner.fallback::before {
+#sparkieDashRunner .sd-sparkie-runner.sd-fallback::before {
   content: '⚡';
   width: 64px;
   height: 64px;
@@ -167,17 +176,17 @@ h1 {
   box-shadow: 0 0 16px rgba(239, 95, 23, 0.6);
 }
 
-.sparkie-runner.running {
-  animation: bounceTilt 0.22s ease-in-out infinite alternate;
+#sparkieDashRunner .sd-sparkie-runner.sd-running {
+  animation: sd-bounceTilt 0.22s ease-in-out infinite alternate;
 }
 
-.sparkie-runner.stopped {
-  animation: stopPop 0.35s ease;
+#sparkieDashRunner .sd-sparkie-runner.sd-stopped {
+  animation: sd-stopPop 0.35s ease;
 }
 
-.action-hint { text-align: center; margin: 14px 0; font-weight: 700; }
+#sparkieDashRunner .sd-action-hint { text-align: center; margin: 14px 0; font-weight: 700; }
 
-.cta {
+#sparkieDashRunner .sd-cta {
   border: 0;
   border-radius: 999px;
   padding: 12px 26px;
@@ -189,14 +198,14 @@ h1 {
   cursor: pointer;
 }
 
-.stop-btn {
+#sparkieDashRunner .sd-stop-btn {
   display: block;
   margin: 0 auto;
   font-size: 1.25rem;
   min-width: 210px;
 }
 
-.overlay {
+#sparkieDashRunner .sd-overlay {
   position: absolute;
   inset: 0;
   background: rgba(10, 10, 10, 0.78);
@@ -206,9 +215,9 @@ h1 {
   padding: 16px;
 }
 
-.overlay.active { display: flex; }
+#sparkieDashRunner .sd-overlay.sd-active { display: flex; }
 
-.result-card {
+#sparkieDashRunner .sd-result-card {
   width: min(420px, 95%);
   background: var(--panel);
   border: 2px solid rgba(87, 190, 177, 0.7);
@@ -218,22 +227,29 @@ h1 {
   box-shadow: 0 0 24px rgba(87, 190, 177, 0.25);
 }
 
-.result-card h2 {
+#sparkieDashRunner .sd-result-card h2 {
   font-size: clamp(2rem, 6vw, 2.8rem);
   margin: 0;
 }
 
-#resultPoints { font-size: 1.2rem; margin: 8px 0 12px; font-weight: 700; }
+#sparkieDashRunner #resultPoints { font-size: 1.2rem; margin: 8px 0 12px; font-weight: 700; }
 
-.reward-wrap {
+#sparkieDashRunner .sd-reward-wrap {
   height: 84px;
   display: grid;
   place-items: center;
   margin-bottom: 14px;
 }
 
-#rewardIcon { width: 72px; height: 72px; object-fit: contain; }
-.reward-fallback {
+#sparkieDashRunner .sd-reward-icon {
+  width: 72px !important;
+  height: 72px !important;
+  max-width: 72px;
+  max-height: 72px;
+  object-fit: contain;
+}
+
+#sparkieDashRunner .sd-reward-fallback {
   width: 72px;
   height: 72px;
   border-radius: 50%;
@@ -241,33 +257,42 @@ h1 {
   box-shadow: 0 0 18px rgba(255, 206, 62, 0.5);
 }
 
-.button-row { display: flex; gap: 10px; justify-content: center; }
-.ghost { background: linear-gradient(180deg, #67d7cc, var(--teal)); }
+#sparkieDashRunner .sd-button-row { display: flex; gap: 10px; justify-content: center; }
+#sparkieDashRunner .sd-ghost { background: linear-gradient(180deg, #67d7cc, var(--teal)); }
 
-.img-fallback {
+#sparkieDashRunner .sd-img-fallback {
   background: linear-gradient(180deg, #f79d6f, var(--orange));
   border-radius: 12px;
   min-height: 70px;
 }
 
-@keyframes bounceTilt {
+@keyframes sd-bounceTilt {
   from { transform: translate(-50%, -54%) rotate(-8deg) scale(0.98); }
   to { transform: translate(-50%, -46%) rotate(8deg) scale(1.03); }
 }
 
-@keyframes stopPop {
+@keyframes sd-stopPop {
   0% { transform: translate(-50%, -50%) scale(1); }
   50% { transform: translate(-50%, -50%) scale(1.15); }
   100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-@keyframes shine {
+@keyframes sd-shine {
   from { transform: translateX(-120%); }
   to { transform: translateX(160%); }
 }
 
 @media (max-width: 700px) {
-  .sparkie-runner { width: 66px; height: 66px; }
-  .sparkie-runner img { width: 66px; height: 66px; }
-  .stop-btn { min-width: 170px; }
+  #sparkieDashRunner.sd-root { padding: 10px; }
+  #sparkieDashRunner .sd-shell { padding: 14px; }
+  #sparkieDashRunner .sd-sparkie-runner,
+  #sparkieDashRunner .sd-sparkie-img {
+    width: 66px !important;
+    height: 66px !important;
+    max-width: 66px;
+    max-height: 66px;
+    min-width: 66px;
+    min-height: 66px;
+  }
+  #sparkieDashRunner .sd-stop-btn { min-width: 170px; }
 }

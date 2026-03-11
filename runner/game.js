@@ -15,6 +15,7 @@ const config = {
 };
 
 const ui = {
+  root: document.getElementById('sparkieDashRunner'),
   startScreen: document.getElementById('startScreen'),
   gameScreen: document.getElementById('gameScreen'),
   resultOverlay: document.getElementById('resultOverlay'),
@@ -40,9 +41,9 @@ const ui = {
 };
 
 const rewardMap = {
-  perfect: '../assets/coins/coin_token.png',
-  great: '../assets/coins/coin_wink.png',
-  good: '../assets/coins/coin_heart.png',
+  perfect: '/assets/coins/coin_token.png',
+  great: '/assets/coins/coin_wink.png',
+  good: '/assets/coins/coin_heart.png',
   miss: ''
 };
 
@@ -62,9 +63,9 @@ const state = {
   goodWidthPct: config.goodZoneWidthPct
 };
 
-setupImageFallback(ui.sparkieImg, () => ui.sparkie.classList.add('fallback'));
-setupImageFallback(ui.topLogo, () => ui.topLogo.classList.add('img-fallback'));
-setupImageFallback(ui.sparkieLogo, () => ui.sparkieLogo.classList.add('img-fallback'));
+setupImageFallback(ui.sparkieImg, () => ui.sparkie.classList.add('sd-fallback'));
+setupImageFallback(ui.topLogo, () => ui.topLogo.classList.add('sd-img-fallback'));
+setupImageFallback(ui.sparkieLogo, () => ui.sparkieLogo.classList.add('sd-img-fallback'));
 setupImageFallback(ui.rewardIcon, () => showRewardFallback(true));
 
 ui.best.textContent = state.best;
@@ -72,8 +73,8 @@ wireEvents();
 
 function wireEvents() {
   ui.startBtn.addEventListener('click', () => {
-    ui.startScreen.classList.remove('active');
-    ui.gameScreen.classList.add('active');
+    ui.startScreen.classList.remove('sd-active');
+    ui.gameScreen.classList.add('sd-active');
     resetGame();
     startRound();
   });
@@ -91,6 +92,13 @@ function wireEvents() {
     if (event.code === 'Space' || event.code === 'Enter') {
       event.preventDefault();
       tryStop();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (ui.gameScreen.classList.contains('sd-active')) {
+      moveSparkie();
+      positionTargetZones();
     }
   });
 }
@@ -111,7 +119,7 @@ function startRound() {
   if (state.animationId) cancelAnimationFrame(state.animationId);
   state.ended = false;
   state.running = true;
-  ui.resultOverlay.classList.remove('active');
+  ui.resultOverlay.classList.remove('sd-active');
 
   const difficultyLevel = state.round - 1;
   state.runDurationMs = Math.max(
@@ -125,15 +133,14 @@ function startRound() {
   );
   state.goodWidthPct = Math.max(state.perfectWidthPct * 2.6, config.goodZoneWidthPct - difficultyLevel * 0.004);
 
-  // Target center is randomly positioned away from edges.
   state.targetCenterPct = 0.2 + Math.random() * 0.6;
 
   positionTargetZones();
 
   state.sparkieX = 0;
   state.runStartTs = performance.now();
-  ui.sparkie.classList.remove('stopped');
-  ui.sparkie.classList.add('running');
+  ui.sparkie.classList.remove('sd-stopped');
+  ui.sparkie.classList.add('sd-running');
   moveSparkie();
 
   state.animationId = requestAnimationFrame(gameLoop);
@@ -144,9 +151,7 @@ function gameLoop(ts) {
 
   const elapsed = ts - state.runStartTs;
   const progress = Math.min(elapsed / state.runDurationMs, 1);
-  const eased = easeInOut(progress);
-
-  state.sparkieX = eased;
+  state.sparkieX = easeInOut(progress);
   moveSparkie();
 
   if (progress >= 1) {
@@ -167,8 +172,8 @@ function resolveStop() {
   state.ended = true;
   if (state.animationId) cancelAnimationFrame(state.animationId);
 
-  ui.sparkie.classList.remove('running');
-  ui.sparkie.classList.add('stopped');
+  ui.sparkie.classList.remove('sd-running');
+  ui.sparkie.classList.add('sd-stopped');
 
   const { rank, points } = calculateResult();
   state.score += points;
@@ -186,18 +191,9 @@ function calculateResult() {
   const perfectHalf = state.perfectWidthPct / 2;
   const goodHalf = state.goodWidthPct / 2;
 
-  if (distance <= perfectHalf * 0.45) {
-    return { rank: 'perfect', points: config.scoreBands.perfect };
-  }
-
-  if (distance <= perfectHalf) {
-    return { rank: 'great', points: config.scoreBands.great };
-  }
-
-  if (distance <= goodHalf) {
-    return { rank: 'good', points: config.scoreBands.good };
-  }
-
+  if (distance <= perfectHalf * 0.45) return { rank: 'perfect', points: config.scoreBands.perfect };
+  if (distance <= perfectHalf) return { rank: 'great', points: config.scoreBands.great };
+  if (distance <= goodHalf) return { rank: 'good', points: config.scoreBands.good };
   return { rank: 'miss', points: config.scoreBands.miss };
 }
 
@@ -228,7 +224,7 @@ function showResult(rank, points) {
     ui.rewardIcon.alt = `${rank} reward icon`;
   }
 
-  ui.resultOverlay.classList.add('active');
+  ui.resultOverlay.classList.add('sd-active');
 }
 
 function positionTargetZones() {
@@ -240,10 +236,10 @@ function positionTargetZones() {
 }
 
 function moveSparkie() {
-  const width = ui.track.clientWidth;
-  const x = state.sparkieX * width;
+  const trackRect = ui.track.getBoundingClientRect();
+  const x = state.sparkieX * trackRect.width;
   ui.sparkie.style.left = `${x}px`;
-  ui.sparkie.style.filter = `blur(${Math.max(0, (state.running ? 1.8 : 0) - Math.abs(state.sparkieX - state.targetCenterPct) * 2)}px)`;
+  ui.sparkie.style.filter = `blur(${Math.max(0, (state.running ? 1.4 : 0) - Math.abs(state.sparkieX - state.targetCenterPct) * 1.6)}px)`;
 }
 
 function updateHud() {
