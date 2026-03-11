@@ -4,6 +4,7 @@ const ctx = canvas.getContext('2d');
 const scoreValue = document.getElementById('scoreValue');
 const timerValue = document.getElementById('timerValue');
 const livesValue = document.getElementById('livesValue');
+const levelValue = document.getElementById('levelValue');
 const nameValue = document.getElementById('nameValue');
 const coinLegend = document.getElementById('coinLegend');
 
@@ -53,6 +54,7 @@ const coinDefs = {
 
 const assets = {
   player: loadImage('assets/sparkie_player.png'),
+  enemyGhost: loadImage('assets/enemy_ghost.svg'),
   logo: loadImage('assets/Value-Logo.png'),
   coins: {
     heart: loadImage(coinDefs.heart.img),
@@ -65,9 +67,10 @@ const assets = {
 const keys = new Set();
 const touchControl = { active: false, dx: 0, dy: 0, startX: 0, startY: 0 };
 let gameState = 'menu';
-let gameStartTime = 0;
 let lastFrame = 0;
-let remainingTime = 90;
+let remainingTime = 60;
+let level = 1;
+let levelStartTime = 0;
 let score = 0;
 let lives = 3;
 let playerName = 'Player';
@@ -75,9 +78,16 @@ let speedBoostUntil = 0;
 
 const particles = [];
 const coins = [];
+const dots = [];
 const enemies = [];
 
-const player = { x: 0, y: 0, r: tileSize * 0.45, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
+const LEVELS = [
+  { timeLimit: 60, enemyCount: 5, enemyMinSpeed: 65, enemyRange: 25 },
+  { timeLimit: 55, enemyCount: 7, enemyMinSpeed: 85, enemyRange: 35 },
+  { timeLimit: 50, enemyCount: 9, enemyMinSpeed: 105, enemyRange: 45 }
+];
+
+const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
 const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
 let db = null;
@@ -157,6 +167,22 @@ function startPosition() {
   return { x: START_TILE.col * tileSize + tileSize / 2, y: START_TILE.row * tileSize + tileSize / 2 };
 }
 
+
+function currentLevelConfig() {
+  return LEVELS[level - 1];
+}
+
+function populateDots() {
+  dots.length = 0;
+  for (let row = 1; row < mazeRows - 1; row++) {
+    for (let col = 1; col < mazeCols - 1; col++) {
+      if (isWall(col, row)) continue;
+      const nearStart = Math.abs(col - START_TILE.col) <= 1 && Math.abs(row - START_TILE.row) <= 1;
+      if (nearStart) continue;
+      dots.push({ x: col * tileSize + tileSize / 2, y: row * tileSize + tileSize / 2 });
+    }
+  }
+}
 function randomOpenPosition() {
   while (true) {
     const col = Math.floor(Math.random() * mazeCols);
@@ -185,17 +211,24 @@ function spawnCoin() {
 
 function spawnEnemy() {
   const pos = randomOpenPosition();
-  enemies.push({ x: pos.x, y: pos.y, r: tileSize * 0.38, vx: 0, vy: 0, speed: 70 + Math.random() * 35, turnAt: 0, style: Math.random() > 0.5 ? 'blob' : 'spark' });
+  const cfg = currentLevelConfig();
+  enemies.push({
+    x: pos.x,
+    y: pos.y,
+    r: tileSize * 0.34,
+    vx: 0,
+    vy: 0,
+    speed: cfg.enemyMinSpeed + Math.random() * cfg.enemyRange,
+    turnAt: 0,
+    useSprite: Math.random() < 0.8
+  });
 }
 
-function resetGame() {
-  score = 0;
-  lives = 3;
-  remainingTime = 90;
-  speedBoostUntil = 0;
+function setupLevel(resetTime = true) {
   particles.length = 0;
   coins.length = 0;
   enemies.length = 0;
+  populateDots();
 
   const p = startPosition();
   player.x = p.x;
@@ -205,16 +238,39 @@ function resetGame() {
   player.angle = 0;
   player.invulnerableUntil = performance.now() + 1200;
 
-  for (let i = 0; i < 12; i++) spawnCoin();
-  for (let i = 0; i < 5; i++) spawnEnemy();
+  for (let i = 0; i < 10; i++) spawnCoin();
+  for (let i = 0; i < currentLevelConfig().enemyCount; i++) spawnEnemy();
 
+  if (resetTime) levelStartTime = performance.now();
   updateHud();
+}
+
+function resetGame() {
+  score = 0;
+  lives = 3;
+  level = 1;
+  speedBoostUntil = 0;
+  remainingTime = currentLevelConfig().timeLimit;
+  setupLevel(true);
+}
+
+function advanceLevel(now) {
+  if (level >= LEVELS.length) {
+    endGame(true);
+    return;
+  }
+  level += 1;
+  speedBoostUntil = 0;
+  remainingTime = currentLevelConfig().timeLimit;
+  levelStartTime = now;
+  setupLevel(false);
 }
 
 function updateHud() {
   scoreValue.textContent = String(score);
   timerValue.textContent = String(Math.max(0, Math.ceil(remainingTime)));
   livesValue.textContent = String(lives);
+  levelValue.textContent = String(level);
   nameValue.textContent = playerName;
 }
 
@@ -255,6 +311,13 @@ function updatePlayer(dt, now) {
   if (!hitWallCircle(nx, player.y, player.r)) player.x = nx;
   if (!hitWallCircle(player.x, ny, player.r)) player.y = ny;
   if (dir.dx || dir.dy) player.angle = Math.atan2(dir.dy, dir.dx);
+
+  for (let i = dots.length - 1; i >= 0; i--) {
+    if (Math.hypot(player.x - dots[i].x, player.y - dots[i].y) < player.r + 5) {
+      score += 1;
+      dots.splice(i, 1);
+    }
+  }
 
   for (let i = coins.length - 1; i >= 0; i--) {
     if (Math.hypot(player.x - coins[i].x, player.y - coins[i].y) < player.r + tileSize * 0.36) collectCoin(i);
@@ -337,6 +400,16 @@ function drawMaze(now) {
   ctx.restore();
 }
 
+
+function drawDots() {
+  ctx.fillStyle = '#ffe8a3';
+  for (const dot of dots) {
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 function drawCoin(coin, now) {
   const bob = Math.sin(now / 300 + coin.t) * 3.5;
   const pulse = 1 + Math.sin(now / 240 + coin.t) * 0.08;
@@ -362,28 +435,15 @@ function drawEnemies(now) {
   for (const e of enemies) {
     ctx.save();
     ctx.translate(e.x, e.y);
-    if (e.style === 'blob') {
-      ctx.fillStyle = '#2a2a2a';
-      ctx.shadowColor = '#57beb1';
+    const size = tileSize * 1.1;
+    if (e.useSprite && assets.enemyGhost.loaded()) {
+      ctx.shadowColor = 'rgba(239,95,23,0.45)';
       ctx.shadowBlur = 8;
+      ctx.drawImage(assets.enemyGhost.img, -size / 2, -size / 2, size, size);
+    } else {
+      ctx.fillStyle = '#ef5f17';
       ctx.beginPath();
       ctx.arc(0, 0, e.r + Math.sin(now / 210) * 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.strokeStyle = '#57beb1';
-      ctx.lineWidth = 3;
-      ctx.shadowColor = '#57beb1';
-      ctx.shadowBlur = 10;
-      for (let i = 0; i < 4; i++) {
-        ctx.rotate(Math.PI / 2);
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(e.r + 6, 0);
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#1e1e1e';
-      ctx.beginPath();
-      ctx.arc(0, 0, e.r * 0.5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
@@ -397,7 +457,7 @@ function drawPlayer(now) {
   ctx.translate(player.x, player.y + bounce);
   ctx.rotate(player.angle * 0.25);
   ctx.globalAlpha = inv ? 0.58 + Math.sin(now / 80) * 0.25 : 1;
-  const size = tileSize * 1.2;
+  const size = tileSize * 1.02;
   if (assets.player.loaded()) {
     ctx.shadowBlur = 11;
     ctx.shadowColor = '#ef5f17';
@@ -446,7 +506,7 @@ function tick(ts) {
   if (gameState !== 'playing') return;
   const dt = Math.min(0.033, (ts - lastFrame) / 1000);
   lastFrame = ts;
-  remainingTime = 90 - (ts - gameStartTime) / 1000;
+  remainingTime = currentLevelConfig().timeLimit - (ts - levelStartTime) / 1000;
   if (remainingTime <= 0 || lives <= 0) {
     endGame();
     return;
@@ -460,11 +520,14 @@ function tick(ts) {
   updateHud();
 
   drawMaze(ts);
+  drawDots();
   coins.forEach((coin) => drawCoin(coin, ts));
   drawEnemies(ts);
   drawPlayer(ts);
   drawParticles();
   drawTouchIndicator();
+
+  if (dots.length === 0) advanceLevel(ts);
 
   requestAnimationFrame(tick);
 }
@@ -479,8 +542,8 @@ function startGame() {
   gameOverScreen.classList.remove('active');
   gameWrap.style.visibility = 'visible';
   gameState = 'playing';
-  gameStartTime = performance.now();
-  lastFrame = gameStartTime;
+  levelStartTime = performance.now();
+  lastFrame = levelStartTime;
   requestAnimationFrame(tick);
 }
 
@@ -519,12 +582,13 @@ async function loadLeaderboard() {
   });
 }
 
-function endGame() {
+function endGame(won = false) {
   gameState = 'over';
   gameWrap.style.visibility = 'hidden';
   finalName.textContent = playerName;
   finalScore.textContent = String(score);
   gameOverScreen.classList.add('active');
+  submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
   loadLeaderboard().catch(() => {});
 }
 
