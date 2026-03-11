@@ -6,18 +6,29 @@
 }
 * { box-sizing: border-box; }
 html, body {
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  margin: 0;
   background: #1e1e1e;
+  overflow: hidden;
 }
 body {
-  margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text);
   background: radial-gradient(circle at 50% 20%, #2a2a2a 0%, var(--bg) 55%);
-  overflow-x: hidden;
   overscroll-behavior: none;
 }
-#app { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 1rem; }
+#app {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  overflow: hidden;
+}
 .hud-shell { text-align: center; width: min(96vw, 980px); }
 #brandLogo {
   display: block; margin: 0 auto 0.3rem; max-width: min(420px, 76vw); max-height: 96px;
@@ -52,7 +63,15 @@ body {
   border-radius: 999px;
 }
 .coin-chip .fallback { background: var(--teal); box-shadow: 0 0 8px rgba(87,190,177,0.45); }
-main { width: min(96vw, 980px); position: relative; }
+main {
+  width: min(96vw, 980px);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 0;
+}
 .game-wrap {
   position: relative;
   background: #131313; border: 2px solid rgba(87, 190, 177, 0.5); border-radius: 20px; overflow: hidden;
