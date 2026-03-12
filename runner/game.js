@@ -213,12 +213,20 @@ function updateHud() {
 function spawnObstacle() {
   const lane = Math.floor(Math.random() * 3);
   const roll = Math.random();
-  let kind = 'block';
-  if (roll < 0.34) kind = 'low';
-  else if (roll < 0.67) kind = 'high';
-  else if (roll < 0.86) kind = 'barrier';
+  let kind = 'car';
+  if (roll < 0.28) kind = 'cone';
+  else if (roll < 0.56) kind = 'sign';
+  else if (roll < 0.82) kind = 'car';
+  else kind = 'truck';
 
-  world.obstacles.push({ lane, kind, y: -120, width: 126, height: 72, hit: false });
+  const templates = {
+    cone: { width: 70, height: 58 },
+    sign: { width: 126, height: 130 },
+    car: { width: 126, height: 86 },
+    truck: { width: 150, height: 110 }
+  };
+
+  world.obstacles.push({ lane, kind, y: -140, ...templates[kind], hit: false });
 }
 
 function spawnCoin() {
@@ -267,8 +275,12 @@ function obstacleRect(obstacle) {
   const x = world.lanes[obstacle.lane] - obstacle.width / 2;
   const y = obstacle.y;
   let h = obstacle.height;
-  if (obstacle.kind === 'high') h = 134;
-  if (obstacle.kind === 'barrier') h = 106;
+  if (obstacle.kind === 'cone') {
+    return { x: x + obstacle.width * 0.2, y: y + obstacle.height * 0.25, w: obstacle.width * 0.6, h: h * 0.7 };
+  }
+  if (obstacle.kind === 'sign') {
+    return { x, y: y + 10, w: obstacle.width, h: h - 8 };
+  }
   return { x, y, w: obstacle.width, h };
 }
 
@@ -360,10 +372,10 @@ function update(dt) {
       const sliding = state.time < player.slidingUntil;
       const jumped = player.y < world.groundY - 48;
       const blocked = (
-        obstacle.kind === 'block' ||
-        (obstacle.kind === 'low' && !jumped) ||
-        (obstacle.kind === 'high' && !sliding) ||
-        obstacle.kind === 'barrier'
+        obstacle.kind === 'car' ||
+        obstacle.kind === 'truck' ||
+        (obstacle.kind === 'cone' && !jumped) ||
+        (obstacle.kind === 'sign' && !sliding)
       );
       if (blocked) {
         obstacle.hit = true;
@@ -396,37 +408,59 @@ function update(dt) {
 }
 
 function drawBackground(activeSpeed) {
-  ctx.fillStyle = '#111318';
+  ctx.fillStyle = '#15171e';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  const horizon = canvas.height * 0.42;
+  const roadTopW = canvas.width * 0.42;
+  const roadBottomW = canvas.width * 0.86;
+  const roadCenter = canvas.width * 0.5;
+
+  ctx.fillStyle = '#1f232b';
+  ctx.beginPath();
+  ctx.moveTo(roadCenter - roadTopW / 2, horizon);
+  ctx.lineTo(roadCenter + roadTopW / 2, horizon);
+  ctx.lineTo(roadCenter + roadBottomW / 2, canvas.height);
+  ctx.lineTo(roadCenter - roadBottomW / 2, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#202d2c';
+  ctx.beginPath();
+  ctx.moveTo(roadCenter - roadTopW / 2 - 70, horizon);
+  ctx.lineTo(roadCenter - roadTopW / 2, horizon);
+  ctx.lineTo(roadCenter - roadBottomW / 2, canvas.height);
+  ctx.lineTo(roadCenter - roadBottomW / 2 - 90, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(roadCenter + roadTopW / 2 + 70, horizon);
+  ctx.lineTo(roadCenter + roadTopW / 2, horizon);
+  ctx.lineTo(roadCenter + roadBottomW / 2, canvas.height);
+  ctx.lineTo(roadCenter + roadBottomW / 2 + 90, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+
+  const laneDrift = (state.distance * 15) % 90;
+  for (let y = horizon - 120 + laneDrift; y < canvas.height + 90; y += 90) {
+    const t = (y - horizon) / (canvas.height - horizon);
+    const w = 8 + t * 14;
+    const h = 18 + t * 22;
+    const spread = (roadTopW * 0.17) + t * (roadBottomW * 0.19);
+    ctx.fillStyle = 'rgba(239,95,23,0.75)';
+    ctx.fillRect(roadCenter - spread - w / 2, y, w, h);
+    ctx.fillRect(roadCenter + spread - w / 2, y, w, h);
+  }
+
   for (const star of world.stars) {
-    star.y += activeSpeed * 0.05 * star.z;
-    if (star.y > canvas.height) {
-      star.y = -4;
+    star.y += activeSpeed * 0.02 * star.z;
+    if (star.y > horizon) {
+      star.y = Math.random() * horizon;
       star.x = Math.random() * canvas.width;
     }
-    ctx.fillStyle = `rgba(87,190,177,${0.25 * star.z})`;
-    ctx.fillRect(star.x, star.y, star.z * 2.2, star.z * 5.2);
-  }
-
-  const laneW = canvas.width * 0.17;
-  for (let i = 0; i < 3; i++) {
-    const x = world.lanes[i] - laneW / 2;
-    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    grad.addColorStop(0, 'rgba(87,190,177,0.08)');
-    grad.addColorStop(1, 'rgba(87,190,177,0.21)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, 0, laneW, canvas.height);
-
-    ctx.strokeStyle = 'rgba(87,190,177,0.55)';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x + 2, 0, laneW - 4, canvas.height);
-  }
-
-  const stripeSpeed = (state.distance * 9) % 80;
-  for (let y = -80 + stripeSpeed; y < canvas.height + 80; y += 80) {
-    ctx.fillStyle = 'rgba(239,95,23,0.3)';
-    ctx.fillRect(canvas.width * 0.16, y, canvas.width * 0.68, 8);
+    const b = 0.15 + star.z * 0.2;
+    ctx.fillStyle = `rgba(87,190,177,${b})`;
+    ctx.fillRect(star.x, star.y, star.z * 2, star.z * 6);
   }
 }
 
@@ -454,28 +488,38 @@ function drawCoin(coin) {
 function drawObstacle(obstacle) {
   const r = obstacleRect(obstacle);
   ctx.save();
-  if (obstacle.kind === 'low') {
-    ctx.fillStyle = '#3b3b3b';
-    ctx.fillRect(r.x, r.y + r.h * 0.35, r.w, r.h * 0.65);
-    ctx.strokeStyle = '#57BEB1';
-    ctx.strokeRect(r.x + 2, r.y + r.h * 0.35 + 2, r.w - 4, r.h * 0.65 - 4);
-  } else if (obstacle.kind === 'high') {
-    ctx.fillStyle = '#2b4f4a';
-    ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.fillStyle = '#57BEB1';
-    ctx.fillRect(r.x + 12, r.y + 16, r.w - 24, 15);
-  } else if (obstacle.kind === 'barrier') {
-    ctx.fillStyle = '#364040';
-    ctx.fillRect(r.x, r.y, r.w, r.h);
+
+  if (obstacle.kind === 'cone') {
     ctx.fillStyle = '#EF5F17';
-    ctx.fillRect(r.x + 8, r.y + 8, r.w - 16, 14);
+    ctx.beginPath();
+    ctx.moveTo(r.x + r.w * 0.5, r.y);
+    ctx.lineTo(r.x + r.w, r.y + r.h);
+    ctx.lineTo(r.x, r.y + r.h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffd1b9';
+    ctx.fillRect(r.x + r.w * 0.2, r.y + r.h * 0.4, r.w * 0.6, r.h * 0.18);
+  } else if (obstacle.kind === 'sign') {
+    ctx.fillStyle = '#6f7d92';
+    ctx.fillRect(r.x + r.w * 0.44, r.y, r.w * 0.12, r.h);
+    ctx.fillStyle = '#57BEB1';
+    roundRect(ctx, r.x + 6, r.y + 12, r.w - 12, r.h * 0.42, 10);
+    ctx.fill();
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(r.x + 18, r.y + 22, r.w - 36, 8);
   } else {
-    ctx.fillStyle = '#252525';
-    ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.strokeStyle = '#57BEB1';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+    const isTruck = obstacle.kind === 'truck';
+    ctx.fillStyle = isTruck ? '#2b5c56' : '#2f3948';
+    roundRect(ctx, r.x, r.y, r.w, r.h, 14);
+    ctx.fill();
+    ctx.fillStyle = '#57BEB1';
+    roundRect(ctx, r.x + 14, r.y + 10, r.w - 28, r.h * 0.34, 8);
+    ctx.fill();
+    ctx.fillStyle = '#15181f';
+    ctx.beginPath(); ctx.arc(r.x + r.w * 0.24, r.y + r.h - 6, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r.x + r.w * 0.76, r.y + r.h - 6, 11, 0, Math.PI * 2); ctx.fill();
   }
+
   ctx.restore();
 }
 
