@@ -5,13 +5,30 @@
   --text: #f8f8f8;
 }
 * { box-sizing: border-box; }
-body {
+html, body {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
   margin: 0;
+  background: #1e1e1e;
+  overflow: hidden;
+}
+body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text);
   background: radial-gradient(circle at 50% 20%, #2a2a2a 0%, var(--bg) 55%);
+  overscroll-behavior: none;
 }
-#app { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 1rem; }
+#app {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  overflow: hidden;
+}
 .hud-shell { text-align: center; width: min(96vw, 980px); }
 #brandLogo {
   display: block; margin: 0 auto 0.3rem; max-width: min(420px, 76vw); max-height: 96px;
@@ -46,17 +63,28 @@ body {
   border-radius: 999px;
 }
 .coin-chip .fallback { background: var(--teal); box-shadow: 0 0 8px rgba(87,190,177,0.45); }
-main { width: min(96vw, 980px); position: relative; }
+main {
+  width: min(96vw, 980px);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 0;
+}
 .game-wrap {
+  position: relative;
   background: #131313; border: 2px solid rgba(87, 190, 177, 0.5); border-radius: 20px; overflow: hidden;
   box-shadow: 0 0 22px rgba(87, 190, 177, 0.15);
   touch-action: none;
+  visibility: hidden;
 }
 #gameCanvas { width: 100%; display: block; aspect-ratio: 3 / 2; background: #141414; }
 .panel {
   position: absolute; inset: 0; background: rgba(30, 30, 30, 0.95); border: 2px solid rgba(239, 95, 23, 0.65);
   border-radius: 20px; padding: 1.2rem; display: none; flex-direction: column; align-items: center;
   justify-content: center; text-align: center; gap: 0.8rem;
+  z-index: 2;
 }
 .panel.active { display: flex; }
 .start-logo { max-width: min(320px, 60vw); max-height: 80px; object-fit: contain; }
@@ -77,3 +105,20 @@ ul { text-align: left; margin: 0.4rem auto 0; max-width: 560px; color: #e6e6e6; 
   font-size: clamp(2rem, 5vw, 3.4rem); margin: 0; color: var(--teal); text-shadow: 0 0 12px rgba(87, 190, 177, 0.4);
 }
 #leaderboard { width: min(360px, 85vw); margin: 0; padding-left: 1.4rem; text-align: left; }
+
+.level-banner {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: clamp(1.5rem, 3vw, 2.6rem);
+  font-weight: 800;
+  text-shadow: 0 0 16px rgba(239,95,23,0.55);
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.level-banner.show {
+  display: flex;
+}
