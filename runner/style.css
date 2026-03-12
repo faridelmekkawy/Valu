@@ -1,0 +1,172 @@
+:root {
+  --orange: #EF5F17;
+  --teal: #57BEB1;
+  --dark: #1E1E1E;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #fff;
+  background: radial-gradient(circle at top, #2b2b2b 10%, var(--dark) 60%);
+}
+.runner-app {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 14px;
+  position: relative;
+}
+.game-shell {
+  width: 100%;
+  border: 2px solid rgba(87, 190, 177, 0.5);
+  border-radius: 24px;
+  overflow: hidden;
+  background: #101010;
+  box-shadow: 0 0 24px rgba(87, 190, 177, 0.25);
+}
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #212121, #171717);
+  border-bottom: 1px solid rgba(87, 190, 177, 0.4);
+}
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--orange);
+}
+.logo-wrap img {
+  width: 130px;
+  max-height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(87, 190, 177, 0.5));
+}
+.stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-weight: 700;
+}
+.stats strong {
+  color: var(--teal);
+  font-size: 1.1rem;
+}
+button {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff864e, var(--orange));
+  color: white;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+button.small { padding: 7px 14px; }
+#gameCanvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1100 / 650;
+  max-width: 100%;
+  background: #0f1116;
+}
+.overlay {
+  position: absolute;
+  inset: 14px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 15, 0.86);
+  border: 2px solid rgba(239, 95, 23, 0.5);
+  border-radius: 24px;
+  z-index: 10;
+}
+.overlay.active { display: flex; }
+.panel {
+  width: min(650px, 90%);
+  text-align: center;
+  background: #1d1d1d;
+  border: 2px solid rgba(87, 190, 177, 0.45);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 0 20px rgba(87, 190, 177, 0.2);
+}
+.panel h1, .panel h2 {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  color: var(--orange);
+}
+.panel img {
+  width: 220px;
+  max-width: 70%;
+  max-height: 88px;
+  object-fit: contain;
+}
+.controls {
+  margin: 16px auto;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(87, 190, 177, 0.4);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+.best { color: #f3c1a7; }
+@media (max-width: 850px) {
+  .hud { flex-direction: column; }
+  .stats { justify-content: center; }
+}
+
+
+#startLogo {
+  display: block;
+  width: min(220px, 55vw) !important;
+  height: auto !important;
+  max-height: 88px !important;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+#hudLogo {
+  width: 130px !important;
+  height: 36px !important;
+  object-fit: contain;
+}
+
+
+
+/* Hard guards against host/global CSS making logos huge */
+#startLogo,
+#hudLogo {
+  display: block !important;
+  max-inline-size: 100% !important;
+  object-fit: contain !important;
+}
+
+#startLogo {
+  inline-size: clamp(140px, 28vw, 220px) !important;
+  block-size: auto !important;
+  max-block-size: 88px !important;
+  margin-inline: auto;
+}
+
+#hudLogo {
+  inline-size: 130px !important;
+  block-size: 36px !important;
+  flex: 0 0 auto;
+}
+
+.logo-wrap {
+  min-width: 0;
+}
+
+
+#startScreen.active,
+#gameOverScreen.active {
+  display: flex !important;
+}
