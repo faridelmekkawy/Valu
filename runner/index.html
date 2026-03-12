@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkie Dash: Perfect Stop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="sparkieDashRunner" class="sd-root" data-sd>
+    <div class="sd-shell">
+      <img id="topLogo" class="sd-brand-logo" src="/assets/Valu_Logo.png" alt="Valu logo" />
+
+      <section id="startScreen" class="sd-screen sd-active">
+        <img id="sparkieLogo" class="sd-sparkie-logo" src="/assets/sparkie_logo.png" alt="Sparkie Dash logo" />
+        <h1 class="sd-title">Sparkie Dash</h1>
+        <p class="sd-subtitle">Perfect Stop</p>
+        <p class="sd-instruction">Stop Sparkie in the perfect zone</p>
+        <button id="startBtn" class="sd-cta">Start Run</button>
+        <p class="sd-control-help">Controls: SPACE · ENTER · CLICK · TAP</p>
+      </section>
+
+      <section id="gameScreen" class="sd-screen" aria-label="Sparkie Dash game screen">
+        <div class="sd-hud">
+          <div class="sd-pill">Score <strong id="score">0</strong></div>
+          <div class="sd-pill">Best <strong id="best">0</strong></div>
+          <div class="sd-pill">Round <strong id="round">1</strong></div>
+          <div class="sd-pill">Streak <strong id="streak">0</strong></div>
+        </div>
+
+        <div id="track" class="sd-track" role="button" tabindex="0" aria-label="Press to stop Sparkie">
+          <div id="goodZone" class="sd-zone sd-good-zone"></div>
+          <div id="perfectZone" class="sd-zone sd-perfect-zone"></div>
+          <div class="sd-track-shine"></div>
+
+          <div id="sparkie" class="sd-sparkie-runner">
+            <img id="sparkieImg" class="sd-sparkie-img" src="/assets/sparkie_player.png" alt="Sparkie runner" />
+          </div>
+        </div>
+
+        <p class="sd-action-hint">Hit STOP at the perfect moment!</p>
+        <button id="stopBtn" class="sd-cta sd-stop-btn">STOP</button>
+      </section>
+
+      <section id="resultOverlay" class="sd-overlay" aria-live="polite">
+        <div class="sd-result-card">
+          <h2 id="resultText">PERFECT</h2>
+          <p id="resultPoints">+100 points</p>
+          <div class="sd-reward-wrap">
+            <img id="rewardIcon" class="sd-reward-icon" src="/assets/coins/coin_token.png" alt="Reward coin" />
+            <div id="rewardFallback" class="sd-reward-fallback" hidden></div>
+          </div>
+          <div class="sd-button-row">
+            <button id="nextBtn" class="sd-cta">Next Round</button>
+            <button id="restartBtn" class="sd-cta sd-ghost">Restart</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
