@@ -1,6 +1,10 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+if (!canvas || !ctx) {
+  throw new Error('Sparkie Rush failed to initialize canvas context.');
+}
+
 const ui = {
   startScreen: document.getElementById('startScreen'),
   gameOverScreen: document.getElementById('gameOverScreen'),
@@ -32,6 +36,27 @@ const coinDefs = {
   token: { value: 100, chance: 0.06, effect: 'boost', glow: 'rgba(255,216,94,0.7)', sprite: null, path: ASSET_PATHS.coinToken }
 };
 
+
+const BEST_SCORE_KEY = 'sparkieRushBest';
+
+function getBestScore() {
+  try {
+    const raw = window.localStorage.getItem(BEST_SCORE_KEY);
+    const n = Number(raw || 0);
+    return Number.isFinite(n) ? n : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+function saveBestScore(value) {
+  try {
+    window.localStorage.setItem(BEST_SCORE_KEY, String(value));
+  } catch (_) {
+    // localStorage can be blocked in some browsers/privacy modes.
+  }
+}
+
 const state = {
   running: false,
   paused: false,
@@ -48,7 +73,7 @@ const state = {
   multiplierUntil: 0,
   boostUntil: 0,
   invulnerableUntil: 0,
-  bestScore: Number(localStorage.getItem('sparkieRushBest') || 0)
+  bestScore: getBestScore()
 };
 
 const world = {
@@ -605,7 +630,7 @@ function finishGame() {
   const final = Math.floor(state.score);
   if (final > state.bestScore) {
     state.bestScore = final;
-    localStorage.setItem('sparkieRushBest', String(final));
+    saveBestScore(final);
   }
   ui.finalScore.textContent = String(final);
   ui.finalDistance.textContent = `${Math.floor(state.distance)}m`;
