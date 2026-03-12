@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkie Rush</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="runner-app">
+    <section id="startScreen" class="overlay active" aria-label="Start screen">
+      <div class="panel">
+        <img id="startLogo" src="../assets/sparkie_logo.png" alt="Sparkie logo" />
+        <h1>Sparkie Rush</h1>
+        <p>Dash the energy lanes, dodge hazards, and collect Sparkie coins.</p>
+        <div class="controls">
+          <span>Move: ←/→ or A/D</span>
+          <span>Jump: ↑ or W</span>
+          <span>Slide: ↓ or S</span>
+          <span>Tablet: swipe left/right/up/down</span>
+        </div>
+        <p class="best">Best Score: <strong id="bestScoreStart">0</strong></p>
+        <button id="startBtn">Start Game</button>
+      </div>
+    </section>
+
+    <section class="game-shell">
+      <header class="hud">
+        <div class="logo-wrap">
+          <img id="hudLogo" src="../assets/Value-Logo.png" alt="Sparkie brand logo" />
+          <span>Sparkie Rush</span>
+        </div>
+        <div class="stats">
+          <div>Score <strong id="score">0</strong></div>
+          <div>Distance <strong id="distance">0m</strong></div>
+          <div>Lives <strong id="lives">3</strong></div>
+        </div>
+        <button id="pauseBtn" class="small">Pause</button>
+      </header>
+      <canvas id="gameCanvas" width="1100" height="650" aria-label="Sparkie Rush gameplay"></canvas>
+    </section>
+
+    <section id="gameOverScreen" class="overlay" aria-label="Game over screen">
+      <div class="panel">
+        <h2>Game Over</h2>
+        <p>Final Score: <strong id="finalScore">0</strong></p>
+        <p>Distance: <strong id="finalDistance">0m</strong></p>
+        <p>Best Local Score: <strong id="bestScoreEnd">0</strong></p>
+        <button id="playAgainBtn">Play Again</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
