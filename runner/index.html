@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sparkie Jackpot</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="runner-page" data-route="/runner">
+      <section id="startScreen" class="screen start-card active" aria-labelledby="startTitle">
+        <img id="startLogo" class="logo" src="../assets/Value-Logo.png" alt="Sparkie logo" />
+        <h1 id="startTitle">Sparkie Jackpot</h1>
+        <p class="sub">Vegas vibes. Sparkie rewards. Spin to win!</p>
+
+        <label for="playerName">Player Name</label>
+        <input id="playerName" maxlength="18" placeholder="Type your name" autocomplete="off" />
+        <button id="startBtn" class="primary-btn">START GAME</button>
+      </section>
+
+      <section id="gameScreen" class="screen" aria-live="polite">
+        <div id="machineCabinet" class="slot-cabinet">
+          <div class="cabinet-arch">
+            <div class="bulb-ring" aria-hidden="true"></div>
+            <img id="gameLogo" class="logo marquee-logo" src="../assets/Value-Logo.png" alt="Sparkie logo" />
+            <div id="winBanner" class="win-banner">SPARKIE JACKPOT</div>
+          </div>
+
+          <div class="status-row">
+            <div class="pill">Player: <strong id="playerLabel">---</strong></div>
+            <div class="pill">Score: <strong id="scoreLabel">0</strong></div>
+            <div class="pill">Best: <strong id="bestLabel">0</strong></div>
+            <div class="pill">Spins: <strong id="spinsLabel">0</strong></div>
+          </div>
+
+          <div class="machine-shell">
+            <div id="reels" class="reels" aria-label="Slot reels">
+              <div class="reel" data-reel="0"><img class="reel-symbol" alt="reel symbol" /></div>
+              <div class="reel" data-reel="1"><img class="reel-symbol" alt="reel symbol" /></div>
+              <div class="reel" data-reel="2"><img class="reel-symbol" alt="reel symbol" /></div>
+            </div>
+          </div>
+
+          <div class="console">
+            <div class="fake-btns" aria-hidden="true">
+              <span class="console-btn blue"></span>
+              <span class="console-btn blue"></span>
+            </div>
+            <button id="spinBtn" class="primary-btn spin-btn">SPIN</button>
+          </div>
+
+          <p id="resultMsg" class="result">Press SPIN to play!</p>
+        </div>
+
+        <img id="sparkieMascot" class="mascot" src="../assets/sparkie_player.png" alt="Sparkie mascot" />
+      </section>
+
+      <div id="resultOverlay" class="overlay" aria-hidden="true">
+        <div id="overlayText" class="overlay-text">+0</div>
+      </div>
+
+      <canvas id="confettiCanvas" class="confetti" width="1200" height="700" aria-hidden="true"></canvas>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
