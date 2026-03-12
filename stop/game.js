@@ -40,7 +40,7 @@
 
   const state = {
     score: 0,
-    best: Number(localStorage.getItem('sparkie-stop-best') || 0),
+    best: 0,
     round: 1,
     streak: 0,
     running: false,
@@ -57,6 +57,23 @@
     perfectWidth: 0
   };
 
+
+  function readBestScore() {
+    try {
+      return Number(window.localStorage.getItem('sparkie-stop-best') || 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  function writeBestScore(value) {
+    try {
+      window.localStorage.setItem('sparkie-stop-best', String(value));
+    } catch {
+      // Ignore storage failures (private mode / blocked storage).
+    }
+  }
+
   const resultIconMap = {
     perfect: '../assets/coins/coin_token.png',
     great: '../assets/coins/coin_wink.png',
@@ -65,6 +82,7 @@
   };
 
   function safeImage(img, fallbackClass, fallbackText) {
+    if (!img) return;
     img.addEventListener('error', () => {
       const fallback = document.createElement('div');
       fallback.className = fallbackClass;
@@ -180,7 +198,7 @@
     state.score += points;
     if (state.score > state.best) {
       state.best = state.score;
-      localStorage.setItem('sparkie-stop-best', String(state.best));
+      writeBestScore(state.best);
     }
 
     updateHud();
@@ -246,7 +264,11 @@
     els.restartBtn.addEventListener('click', () => resetRun(true));
 
     document.addEventListener('keydown', inputHandler);
-    els.track.addEventListener('pointerdown', inputHandler);
+    document.addEventListener('pointerdown', (evt) => {
+      if (!state.gameStarted || !els.gameScreen.classList.contains('active')) return;
+      if (evt.target.closest('button')) return;
+      inputHandler(evt);
+    });
 
     window.addEventListener('resize', () => {
       if (!state.gameStarted) return;
@@ -254,6 +276,7 @@
     });
   }
 
+  state.best = readBestScore();
   setupFallbacks();
   updateHud();
   bindEvents();

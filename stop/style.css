@@ -9,6 +9,12 @@
   box-sizing: border-box;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -34,8 +40,8 @@ body {
 }
 
 .brand-logo {
-  width: min(280px, 70vw);
-  max-height: 84px;
+  width: min(220px, 50vw);
+  max-height: 64px;
   object-fit: contain;
   filter: drop-shadow(0 0 14px rgba(87, 190, 177, 0.45));
 }
@@ -81,8 +87,8 @@ body {
 }
 
 .screen-logo {
-  width: min(300px, 68vw);
-  max-height: 90px;
+  width: min(240px, 60vw);
+  max-height: 72px;
   object-fit: contain;
   margin-bottom: 6px;
 }
@@ -223,7 +229,8 @@ ul {
 .logo-fallback {
   background: linear-gradient(180deg, #6fd4c8, var(--teal));
   border-radius: 999px;
-  min-height: 72px;
+  min-height: 48px;
+  max-width: min(240px, 60vw);
   padding: 8px 16px;
 }
 
