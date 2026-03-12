@@ -197,10 +197,12 @@ async function loadAssets() {
 }
 
 function showOverlay(name) {
-  ui.startScreen.classList.remove('active');
-  ui.gameOverScreen.classList.remove('active');
-  if (name === 'start') ui.startScreen.classList.add('active');
-  if (name === 'gameover') ui.gameOverScreen.classList.add('active');
+  ui.startScreen.classList.toggle('active', name === 'start');
+  ui.gameOverScreen.classList.toggle('active', name === 'gameover');
+
+  // Inline display guards against host/global CSS collisions.
+  ui.startScreen.style.display = name === 'start' ? 'flex' : 'none';
+  ui.gameOverScreen.style.display = name === 'gameover' ? 'flex' : 'none';
 }
 
 function resetGame() {
@@ -226,6 +228,7 @@ function resetGame() {
   player.vy = 0;
   updateHud();
   showOverlay('none');
+  ui.pauseBtn.disabled = false;
   ui.pauseBtn.textContent = 'Pause';
 }
 
@@ -640,7 +643,11 @@ function finishGame() {
 }
 
 function togglePause() {
-  if (!state.running || state.gameOver) return;
+  if (!state.running && !state.gameOver) {
+    resetGame();
+    return;
+  }
+  if (state.gameOver) return;
   state.paused = !state.paused;
   ui.pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
 }
@@ -660,5 +667,13 @@ ui.pauseBtn.addEventListener('click', togglePause);
 
 loadAssets().then(() => {
   ui.bestScoreStart.textContent = String(state.bestScore);
+  showOverlay('start');
+  ui.pauseBtn.disabled = false;
+  ui.pauseBtn.textContent = 'Start';
+  requestAnimationFrame(loop);
+}).catch(() => {
+  showOverlay('start');
+  ui.pauseBtn.disabled = false;
+  ui.pauseBtn.textContent = 'Start';
   requestAnimationFrame(loop);
 });

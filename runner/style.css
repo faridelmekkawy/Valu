@@ -164,3 +164,9 @@ button.small { padding: 7px 14px; }
 .logo-wrap {
   min-width: 0;
 }
+
+
+#startScreen.active,
+#gameOverScreen.active {
+  display: flex !important;
+}
