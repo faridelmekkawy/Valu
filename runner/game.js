@@ -150,7 +150,13 @@ function loadImage(path) {
 
 async function loadAssets() {
   player.sprite = await loadImage(ASSET_PATHS.player);
-  if (!player.sprite) player.missingSprite = true;
+  if (!player.sprite) {
+    player.missingSprite = true;
+  } else {
+    const ratio = player.sprite.naturalWidth / Math.max(1, player.sprite.naturalHeight);
+    player.height = 118;
+    player.width = Math.max(70, Math.min(150, player.height * ratio));
+  }
 
   const logo = await loadImage(ASSET_PATHS.logo);
   if (!logo) {

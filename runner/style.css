@@ -11,13 +11,14 @@ body {
   background: radial-gradient(circle at top, #2b2b2b 10%, var(--dark) 60%);
 }
 .runner-app {
-  max-width: 1200px;
+  width: min(100%, 1200px);
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: 14px;
   position: relative;
 }
 .game-shell {
+  width: 100%;
   border: 2px solid rgba(87, 190, 177, 0.5);
   border-radius: 24px;
   overflow: hidden;
@@ -68,8 +69,10 @@ button {
 button.small { padding: 7px 14px; }
 #gameCanvas {
   display: block;
-  width: 100%;
-  aspect-ratio: 16/9;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1100 / 650;
+  max-width: 100%;
   background: #0f1116;
 }
 .overlay {
@@ -117,4 +120,20 @@ button.small { padding: 7px 14px; }
 @media (max-width: 850px) {
   .hud { flex-direction: column; }
   .stats { justify-content: center; }
+}
+
+
+#startLogo {
+  display: block;
+  width: min(220px, 55vw) !important;
+  height: auto !important;
+  max-height: 88px !important;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+#hudLogo {
+  width: 130px !important;
+  height: 36px !important;
+  object-fit: contain;
 }
