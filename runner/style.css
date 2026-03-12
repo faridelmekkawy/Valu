@@ -137,3 +137,30 @@ button.small { padding: 7px 14px; }
   height: 36px !important;
   object-fit: contain;
 }
+
+
+
+/* Hard guards against host/global CSS making logos huge */
+#startLogo,
+#hudLogo {
+  display: block !important;
+  max-inline-size: 100% !important;
+  object-fit: contain !important;
+}
+
+#startLogo {
+  inline-size: clamp(140px, 28vw, 220px) !important;
+  block-size: auto !important;
+  max-block-size: 88px !important;
+  margin-inline: auto;
+}
+
+#hudLogo {
+  inline-size: 130px !important;
+  block-size: 36px !important;
+  flex: 0 0 auto;
+}
+
+.logo-wrap {
+  min-width: 0;
+}
