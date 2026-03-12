@@ -1,49 +1,53 @@
-# Sparkie Dash
+# Sparkie Jackpot (`/runner` route)
 
-Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla JavaScript, using provided image assets and optional Firebase Firestore leaderboard support.
+Frontend-only mini-game built with HTML, CSS, and vanilla JavaScript.
+
+## Project structure
+
+- Route page: `runner/index.html`
+- Styles: `runner/style.css`
+- Logic: `runner/game.js`
+- Assets folder (provided): `assets/...`
 
 ## Run locally
 
-1. From this folder, run a static server (example):
+1. From repo root:
    ```bash
    python3 -m http.server 8080
    ```
-2. Open `http://localhost:8080`.
-3. Enter a gamer tag and press **Start Game**.
+2. Open:
+   - `http://localhost:8080/runner/` (route page)
 
-## Controls
+## Required assets
 
-- Keyboard: Arrow keys or WASD.
-- Touch: swipe on the game canvas to move in the swipe direction.
-- The player always respawns in the glowing **START** area for clear orientation.
+Keep these exact files/paths:
 
-## Replace assets
+- `assets/sparkie_player.png`
+- `assets/Value-Logo.png`
+- `assets/coins/coin_heart.png`
+- `assets/coins/coin_wink.png`
+- `assets/coins/coin_token.png`
+- `assets/coins/coin_card.png`
 
-- Player sprite: `assets/sparkie_player.png`
-- Logo: `assets/Value-Logo.png`
-- Coins:
-  - `assets/coins/coin_heart.png`
-  - `assets/coins/coin_wink.png`
-  - `assets/coins/coin_card.png`
-  - `assets/coins/coin_token.png`
+If any image is missing, the game auto-renders fallback placeholder shapes.
 
-Keep the same file names to avoid code changes. If any image is missing, the game renders fallback placeholder shapes.
+## Integration notes
 
-## Firestore leaderboard setup
+To integrate in an existing routed app:
 
-1. Create a Firebase project and Firestore database.
-2. In `game.js`, update `firebaseConfig` values (`apiKey`, `authDomain`, `projectId`).
-3. Ensure Firestore security rules allow writes/reads for your event setup.
-4. Scores are stored in collection `sparkie_dash_scores`.
+- Mount this page at `/runner`.
+- Keep the relative asset paths or update symbol/logo path constants in `runner/game.js`.
+- Copy `runner/index.html`, `runner/style.css`, and `runner/game.js` into your route/page component structure.
 
-If Firebase is not configured, leaderboard automatically falls back to local browser storage.
+## Tuning gameplay later
 
-## Deploy
+In `runner/game.js`:
 
-Deploy as a static site to any host (Firebase Hosting, Netlify, Vercel, GitHub Pages, or Nginx).
+- **Scoring rules**: edit `SCORING` and `evaluateSpin()`.
+- **Symbol odds**: edit each symbol `weight` in `SYMBOLS` (lower `card` keeps it rarer).
+- **Reel speed/timing**: edit spin intervals and stop delays in `spin()` (`85`, `760`, `340`).
+- **Jackpot feedback**: edit `spawnConfetti()` and messages in `evaluateSpin()`.
 
-Basic Firebase Hosting path:
-1. `npm install -g firebase-tools`
-2. `firebase login`
-3. `firebase init hosting` (set public dir to current project root)
-4. `firebase deploy`
+## Replace assets later
+
+Replace files in `assets/` with the same names to avoid code changes, or update paths in `runner/game.js` and `runner/index.html`.
