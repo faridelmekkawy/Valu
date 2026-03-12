@@ -77,12 +77,14 @@ main {
   background: #131313; border: 2px solid rgba(87, 190, 177, 0.5); border-radius: 20px; overflow: hidden;
   box-shadow: 0 0 22px rgba(87, 190, 177, 0.15);
   touch-action: none;
+  visibility: hidden;
 }
 #gameCanvas { width: 100%; display: block; aspect-ratio: 3 / 2; background: #141414; }
 .panel {
   position: absolute; inset: 0; background: rgba(30, 30, 30, 0.95); border: 2px solid rgba(239, 95, 23, 0.65);
   border-radius: 20px; padding: 1.2rem; display: none; flex-direction: column; align-items: center;
   justify-content: center; text-align: center; gap: 0.8rem;
+  z-index: 2;
 }
 .panel.active { display: flex; }
 .start-logo { max-width: min(320px, 60vw); max-height: 80px; object-fit: contain; }
