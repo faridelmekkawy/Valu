@@ -23,6 +23,7 @@
   const pauseBtn = document.getElementById('pauseBtn');
   const resumeBtn = document.getElementById('resumeBtn');
   const muteBtn = document.getElementById('muteBtn');
+  const touchControls = document.getElementById('touchControls');
 
   const laneOffsets = [-0.35, 0, 0.35];
   const COIN_TYPES = {
@@ -82,10 +83,13 @@
   let spawnClock = 0;
   let sideDecorScroll = 0;
   let audioContext;
+  let swipeStart = null;
 
   bestValue.textContent = String(state.bestScore);
   setScreen('start');
   updateHud();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
   requestAnimationFrame(loop);
 
   startBtn.addEventListener('click', startRun);
@@ -96,16 +100,23 @@
     state.muted = !state.muted;
     muteBtn.textContent = state.muted ? 'Unmute' : 'Mute';
   });
+  initTouch();
+
+  touchControls.addEventListener('click', (event) => {
+    const target = event.target.closest('button[data-touch-action]');
+    if (!target) return;
+    triggerAction(target.dataset.touchAction);
+  });
 
   window.addEventListener('keydown', (event) => {
     const key = event.key.toLowerCase();
     if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'a', 'd', 'w', 's', 'p'].includes(key)) event.preventDefault();
 
     if (state.screen === 'playing' || state.screen === 'countdown') {
-      if (key === 'arrowleft' || key === 'a') shiftLane(-1);
-      if (key === 'arrowright' || key === 'd') shiftLane(1);
-      if (key === 'arrowup' || key === 'w') jump();
-      if (key === 'arrowdown' || key === 's') slide();
+      if (key === 'arrowleft' || key === 'a') triggerAction('left');
+      if (key === 'arrowright' || key === 'd') triggerAction('right');
+      if (key === 'arrowup' || key === 'w') triggerAction('jump');
+      if (key === 'arrowdown' || key === 's') triggerAction('slide');
       if (key === 'p' && state.screen === 'playing') togglePause();
     } else if (state.screen === 'paused' && key === 'p') {
       togglePause();
@@ -158,6 +169,13 @@
 
   function shiftLane(delta) {
     player.targetLane = Math.max(0, Math.min(2, player.targetLane + delta));
+  }
+
+  function triggerAction(action) {
+    if (action === 'left') shiftLane(-1);
+    if (action === 'right') shiftLane(1);
+    if (action === 'jump') jump();
+    if (action === 'slide') slide();
   }
 
   function jump() {
@@ -589,6 +607,54 @@
       y: h * (0.27 + t * 0.72),
       scale: 0.1 + t * 1.4
     };
+  }
+
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const targetWidth = Math.floor(rect.width * dpr);
+    const targetHeight = Math.floor(rect.height * dpr);
+    if (targetWidth > 0 && targetHeight > 0 && (canvas.width !== targetWidth || canvas.height !== targetHeight)) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
+  }
+
+  function initTouch() {
+    const touchStart = (x, y) => {
+      swipeStart = { x, y, t: performance.now(), used: false };
+    };
+    const touchMove = (x, y) => {
+      if (!swipeStart || swipeStart.used) return;
+      const dx = x - swipeStart.x;
+      const dy = y - swipeStart.y;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      const threshold = 28;
+      if (absX < threshold && absY < threshold) return;
+
+      if (absX > absY) triggerAction(dx > 0 ? 'right' : 'left');
+      else triggerAction(dy > 0 ? 'slide' : 'jump');
+      swipeStart.used = true;
+    };
+    const touchEnd = () => {
+      swipeStart = null;
+    };
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (!e.touches[0]) return;
+      const t = e.touches[0];
+      touchStart(t.clientX, t.clientY);
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (!e.touches[0]) return;
+      const t = e.touches[0];
+      touchMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', touchEnd, { passive: true });
+    canvas.addEventListener('touchcancel', touchEnd, { passive: true });
   }
 
   function makeImage(src) {

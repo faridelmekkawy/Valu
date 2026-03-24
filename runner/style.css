@@ -13,6 +13,7 @@ html, body {
   background: radial-gradient(circle at 50% 10%, #2d2d2d 0%, var(--dark) 60%);
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
+  touch-action: none;
 }
 
 .runner-app {
@@ -110,6 +111,7 @@ html, body {
   height: 100%;
   display: block;
   background: #141414;
+  touch-action: none;
 }
 
 .overlay {
@@ -184,6 +186,33 @@ h1, h2 {
   justify-content: center;
 }
 
+.touch-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: none;
+  gap: 10px;
+  z-index: 5;
+}
+
+.touch-controls button {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid rgba(87, 190, 177, 0.7);
+  background: rgba(20, 20, 20, 0.75);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .touch-controls {
+    display: flex;
+  }
+}
+
 @media (max-width: 860px) {
   .hud {
     grid-template-columns: 1fr;
@@ -196,4 +225,9 @@ h1, h2 {
   }
 
   .controls-grid { grid-template-columns: 1fr; }
+
+  .touch-controls button {
+    width: 62px;
+    height: 62px;
+  }
 }

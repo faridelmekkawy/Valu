@@ -39,6 +39,7 @@
           <span>↑ / W = Jump</span>
           <span>↓ / S = Slide</span>
           <span>P = Pause</span>
+          <span>Swipe on iPad = Move</span>
         </div>
         <button id="startBtn" class="cta" type="button">Start Game</button>
       </section>
@@ -63,6 +64,13 @@
         <p id="newBestBadge" class="new-best hidden">New Best!</p>
         <button id="playAgainBtn" class="cta" type="button">Play Again</button>
       </section>
+
+      <div class="touch-controls" id="touchControls" aria-label="Touch controls">
+        <button type="button" data-touch-action="left">◀</button>
+        <button type="button" data-touch-action="jump">▲</button>
+        <button type="button" data-touch-action="slide">▼</button>
+        <button type="button" data-touch-action="right">▶</button>
+      </div>
     </main>
   </div>
 
