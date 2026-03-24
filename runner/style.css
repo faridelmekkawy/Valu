@@ -1,0 +1,254 @@
+:root {
+  --orange: #ef5f17;
+  --teal: #57beb1;
+  --dark: #1e1e1e;
+  --text: #f4f8f7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  min-height: 100%;
+  background: radial-gradient(circle at 50% 10%, #2d2d2d 0%, var(--dark) 60%);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.runner-app {
+  height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 10px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.runner-app button {
+  font: inherit;
+}
+
+.hud {
+  width: min(1200px, 96vw);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  background: rgba(20, 20, 20, 0.78);
+  border: 1px solid rgba(87, 190, 177, 0.5);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 0 20px rgba(87, 190, 177, 0.18);
+}
+
+.hud-logo-wrap {
+  width: clamp(100px, 12vw, 150px);
+  height: clamp(34px, 5vw, 46px);
+}
+
+.hud-logo-wrap img,
+.sparkie-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hud-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid rgba(239, 95, 23, 0.5);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill strong { color: #fff; }
+
+.hud-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.runner-app .ghost-btn,
+.runner-app .cta {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+}
+
+.runner-app .ghost-btn {
+  background: rgba(87, 190, 177, 0.2);
+  border: 1px solid rgba(87, 190, 177, 0.65);
+}
+
+.runner-app .cta {
+  background: linear-gradient(180deg, #ff8249, var(--orange));
+  box-shadow: 0 0 14px rgba(239, 95, 23, 0.4);
+}
+
+.game-shell {
+  width: min(1200px, 96vw);
+  margin: 0 auto;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+  max-height: calc(100dvh - 150px);
+  aspect-ratio: 16 / 9;
+  border: 2px solid rgba(87, 190, 177, 0.56);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0f1010;
+  box-shadow: 0 0 24px rgba(87, 190, 177, 0.2);
+}
+
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #141414;
+  touch-action: none;
+}
+
+.runner-app .sr-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 10px;
+  background: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.9));
+  padding: 16px;
+  z-index: 4;
+}
+
+.runner-app .sr-overlay.is-active { display: flex; }
+
+.sparkie-logo {
+  width: min(360px, 70vw);
+  max-height: 120px;
+}
+
+h1, h2 {
+  margin: 0;
+  color: var(--orange);
+  text-shadow: 0 0 10px rgba(239, 95, 23, 0.45);
+}
+
+.subtitle {
+  max-width: 600px;
+  margin: 0;
+  color: #dbf5f2;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  gap: 8px 14px;
+  width: min(500px, 90%);
+}
+
+.controls-grid span {
+  background: rgba(87, 190, 177, 0.12);
+  border: 1px solid rgba(87, 190, 177, 0.4);
+  border-radius: 10px;
+  padding: 7px;
+}
+
+#countdownValue {
+  font-size: clamp(3rem, 10vw, 7rem);
+  margin: 0;
+  color: var(--teal);
+  text-shadow: 0 0 16px rgba(87, 190, 177, 0.6);
+}
+
+.new-best {
+  background: rgba(239, 95, 23, 0.2);
+  border: 1px solid rgba(239, 95, 23, 0.7);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.hidden { display: none; }
+
+.logo-fallback {
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(87, 190, 177, 0.85), rgba(239, 95, 23, 0.85));
+  color: #fff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.runner-app .touch-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: none;
+  gap: 10px;
+  z-index: 5;
+}
+
+.runner-app .touch-controls button {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid rgba(87, 190, 177, 0.7);
+  background: rgba(20, 20, 20, 0.75);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .touch-controls {
+    display: flex;
+  }
+}
+
+@media (max-width: 860px) {
+  .hud {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .hud-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .controls-grid { grid-template-columns: 1fr; }
+
+  .touch-controls button {
+    width: 62px;
+    height: 62px;
+  }
+
+  .runner-app {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .game-shell {
+    max-height: calc(100dvh - 185px);
+  }
+}
