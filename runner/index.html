@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkie Rush</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="runner-app">
+    <header class="hud" id="hud" aria-live="polite">
+      <div class="hud-logo-wrap">
+        <img id="valuLogo" src="../assets/Value-Logo.png" alt="Valu logo" />
+        <div class="logo-fallback hidden" id="valuLogoFallback">VALU</div>
+      </div>
+      <div class="hud-stats">
+        <div class="pill">Score <strong id="scoreValue">0</strong></div>
+        <div class="pill">Distance <strong id="distanceValue">0 m</strong></div>
+        <div class="pill">Lives <strong id="livesValue">3</strong></div>
+        <div class="pill">Best <strong id="bestValue">0</strong></div>
+      </div>
+      <div class="hud-actions">
+        <button id="pauseBtn" class="ghost-btn" type="button">Pause</button>
+        <button id="muteBtn" class="ghost-btn" type="button">Mute</button>
+      </div>
+    </header>
+
+    <main class="game-shell">
+      <canvas id="gameCanvas" width="1100" height="640" aria-label="Sparkie Rush gameplay canvas"></canvas>
+
+      <section class="sr-overlay is-active" id="startScreen">
+        <img id="sparkieLogo" class="sparkie-logo" src="../assets/sparkie_logo.png" alt="Sparkie logo" />
+        <div class="logo-fallback hidden" id="sparkieLogoFallback">SPARKIE</div>
+        <h1>Sparkie Rush</h1>
+        <p class="subtitle">Dash through the neon city, dodge traffic, and grab glowing coins.</p>
+        <div class="controls-grid">
+          <span>← / A = Left</span>
+          <span>→ / D = Right</span>
+          <span>↑ / W = Jump</span>
+          <span>↓ / S = Slide</span>
+          <span>P = Pause</span>
+          <span>Swipe on iPad = Move</span>
+        </div>
+        <button id="startBtn" class="cta" type="button">Start Game</button>
+      </section>
+
+      <section class="sr-overlay" id="countdownScreen">
+        <h2>Get Ready</h2>
+        <p id="countdownValue">3</p>
+      </section>
+
+      <section class="sr-overlay" id="pauseScreen">
+        <h2>Paused</h2>
+        <p>Press P or Pause to continue.</p>
+        <button id="resumeBtn" class="cta" type="button">Resume</button>
+      </section>
+
+      <section class="sr-overlay" id="gameOverScreen">
+        <h2>Run Over</h2>
+        <p>Final Score: <strong id="finalScore">0</strong></p>
+        <p>Distance: <strong id="finalDistance">0 m</strong></p>
+        <p>Coins: <strong id="finalCoins">0</strong></p>
+        <p>Best Local Score: <strong id="bestScoreValue">0</strong></p>
+        <p id="newBestBadge" class="new-best hidden">New Best!</p>
+        <button id="playAgainBtn" class="cta" type="button">Play Again</button>
+      </section>
+
+      <div class="touch-controls" id="touchControls" aria-label="Touch controls">
+        <button type="button" data-touch-action="left">◀</button>
+        <button type="button" data-touch-action="jump">▲</button>
+        <button type="button" data-touch-action="slide">▼</button>
+        <button type="button" data-touch-action="right">▶</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

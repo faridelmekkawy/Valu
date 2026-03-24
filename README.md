@@ -1,49 +1,38 @@
-# Sparkie Dash
+# Sparkie Rush (`/runner`)
 
-Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla JavaScript, using provided image assets and optional Firebase Firestore leaderboard support.
+A frontend-only endless runner built with **HTML + CSS + vanilla JavaScript**.
 
 ## Run locally
 
-1. From this folder, run a static server (example):
-   ```bash
-   python3 -m http.server 8080
-   ```
-2. Open `http://localhost:8080`.
-3. Enter a gamer tag and press **Start Game**.
+```bash
+python3 -m http.server 8080
+```
+
+Then open:
+
+- `http://localhost:8080/runner/`
 
 ## Controls
 
-- Keyboard: Arrow keys or WASD.
-- Touch: swipe on the game canvas to move in the swipe direction.
-- The player always respawns in the glowing **START** area for clear orientation.
+- `Left Arrow` / `A`: move lane left
+- `Right Arrow` / `D`: move lane right
+- `Up Arrow` / `W`: jump
+- `Down Arrow` / `S`: slide
+- `P`: pause / resume
 
-## Replace assets
+## Assets expected
 
-- Player sprite: `assets/sparkie_player.png`
-- Logo: `assets/Value-Logo.png`
-- Coins:
-  - `assets/coins/coin_heart.png`
-  - `assets/coins/coin_wink.png`
-  - `assets/coins/coin_card.png`
-  - `assets/coins/coin_token.png`
+The runner page uses these paths:
 
-Keep the same file names to avoid code changes. If any image is missing, the game renders fallback placeholder shapes.
+- `assets/sparkie_player.png`
+- `assets/Value-Logo.png`
+- `assets/sparkie_logo.png` (start screen)
+- `assets/coins/coin_heart.png`
+- `assets/coins/coin_wink.png`
+- `assets/coins/coin_token.png`
 
-## Firestore leaderboard setup
+If any image is missing, the game uses safe placeholder shapes/UI so gameplay keeps running.
 
-1. Create a Firebase project and Firestore database.
-2. In `game.js`, update `firebaseConfig` values (`apiKey`, `authDomain`, `projectId`).
-3. Ensure Firestore security rules allow writes/reads for your event setup.
-4. Scores are stored in collection `sparkie_dash_scores`.
+## Replace assets later
 
-If Firebase is not configured, leaderboard automatically falls back to local browser storage.
-
-## Deploy
-
-Deploy as a static site to any host (Firebase Hosting, Netlify, Vercel, GitHub Pages, or Nginx).
-
-Basic Firebase Hosting path:
-1. `npm install -g firebase-tools`
-2. `firebase login`
-3. `firebase init hosting` (set public dir to current project root)
-4. `firebase deploy`
+Keep file names and paths unchanged for a drop-in replacement. PNG transparency is preserved and logos are rendered with `object-fit: contain` to maintain aspect ratio.
