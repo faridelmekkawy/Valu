@@ -10,7 +10,14 @@
   <div class="runner-app">
     <header class="hud" id="hud" aria-live="polite">
       <div class="hud-logo-wrap">
-        <img id="valuLogo" src="../assets/Value-Logo.png" alt="Valu logo" />
+        <img
+          id="valuLogo"
+          src="../assets/Value-Logo.png"
+          alt="Valu logo"
+          width="160"
+          height="53"
+          style="max-width: 160px; width: 100%; height: auto; object-fit: contain;"
+        />
         <div class="logo-fallback hidden" id="valuLogoFallback">VALU</div>
       </div>
       <div class="hud-stats">
@@ -29,7 +36,15 @@
       <canvas id="gameCanvas" width="1100" height="640" aria-label="Sparkie Rush gameplay canvas"></canvas>
 
       <section class="overlay active" id="startScreen">
-        <img id="sparkieLogo" class="sparkie-logo" src="../assets/sparkie_logo.png" alt="Sparkie logo" />
+        <img
+          id="sparkieLogo"
+          class="sparkie-logo"
+          src="../assets/sparkie_logo.png"
+          alt="Sparkie logo"
+          width="320"
+          height="120"
+          style="max-width: min(360px, 70vw); width: 100%; height: auto; object-fit: contain;"
+        />
         <div class="logo-fallback hidden" id="sparkieLogoFallback">SPARKIE</div>
         <h1>Sparkie Rush</h1>
         <p class="subtitle">Dash through the neon city, dodge traffic, and grab glowing coins.</p>

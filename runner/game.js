@@ -585,7 +585,7 @@
     const width = 95;
     const height = 125 * slideScale;
 
-    if (images.player.ready) {
+    if (images.player.ready && images.player.safeForCharacter) {
       const tilt = (player.targetLane - player.lane) * 0.22;
       ctx.save();
       ctx.translate(pos.x, pos.y - jumpOffset + bounce);
@@ -659,8 +659,12 @@
 
   function makeImage(src) {
     const node = new Image();
-    const data = { node, ready: false };
-    node.onload = () => { data.ready = true; };
+    const data = { node, ready: false, safeForCharacter: true };
+    node.onload = () => {
+      data.ready = true;
+      const ratio = node.naturalWidth / Math.max(1, node.naturalHeight);
+      data.safeForCharacter = ratio >= 0.4 && ratio <= 1.7;
+    };
     node.onerror = () => { data.ready = false; };
     node.src = src;
     return data;
