@@ -56,7 +56,7 @@ const coinDefs = {
 
 const assets = {
   player: loadImage('assets/sparkie_player.png'),
-  enemyGhost: loadImage('assets/enemy_ghost.svg'),
+  enemyGhost: loadImage('assets/enemy_bat.svg'),
   logo: loadImage('assets/Value-Logo.png'),
   coins: {
     heart: loadImage(coinDefs.heart.img),
