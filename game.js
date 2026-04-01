@@ -12,6 +12,7 @@ const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const gameWrap = document.getElementById('gameWrap');
 const playerNameInput = document.getElementById('playerName');
+const playerPhoneInput = document.getElementById('playerPhone');
 const finalName = document.getElementById('finalName');
 const finalScore = document.getElementById('finalScore');
 const submitStatus = document.getElementById('submitStatus');
@@ -76,6 +77,7 @@ let levelStartTime = 0;
 let score = 0;
 let lives = 3;
 let playerName = 'Player';
+let playerPhone = '';
 let speedBoostUntil = 0;
 let levelTransitionUntil = 0;
 let submittedThisRound = false;
@@ -93,13 +95,20 @@ const LEVELS = [
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
-const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
+const firebaseConfig = {
+  apiKey: 'AIzaSyDi0JNtflaGDXm6eohqVNXxB3O9KyxMXnw',
+  authDomain: 'valu-games.firebaseapp.com',
+  projectId: 'valu-games',
+  storageBucket: 'valu-games.firebasestorage.app',
+  messagingSenderId: '118411226267',
+  appId: '1:118411226267:web:003b210e3a298f69626a3e',
+  measurementId: 'G-240GP3YVCG'
+};
 let db = null;
 let firestoreAvailable = false;
 
 async function initFirebase() {
   try {
-    if (Object.values(firebaseConfig).includes('REPLACE_ME')) return;
     const [{ initializeApp }, { getFirestore, collection, addDoc, query, orderBy, limit, getDocs }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
@@ -109,6 +118,24 @@ async function initFirebase() {
     firestoreAvailable = true;
   } catch (err) {
     console.warn('Firestore unavailable, using local leaderboard fallback.', err);
+  }
+}
+
+async function savePacmanEvent(eventType, extra = {}) {
+  if (!firestoreAvailable) return;
+  try {
+    await db.addDoc(db.collection(db.ref, 'pacmansave'), {
+      eventType,
+      name: playerName,
+      phone: playerPhone,
+      score,
+      level,
+      lives,
+      timestamp: Date.now(),
+      ...extra
+    });
+  } catch (err) {
+    console.warn(`Failed to save ${eventType} event.`, err);
   }
 }
 
@@ -559,7 +586,14 @@ function tick(ts) {
 }
 
 function startGame() {
-  playerName = playerNameInput.value.trim() || 'Player';
+  const nextName = playerNameInput.value.trim();
+  const nextPhone = playerPhoneInput.value.trim();
+  if (!nextName || !nextPhone) {
+    window.alert('Please enter both name and phone number.');
+    return;
+  }
+  playerName = nextName;
+  playerPhone = nextPhone;
   nameValue.textContent = playerName;
   submitStatus.textContent = '';
   leaderboardEl.innerHTML = '';
@@ -570,6 +604,7 @@ function startGame() {
   gameState = 'playing';
   levelStartTime = performance.now();
   lastFrame = levelStartTime;
+  savePacmanEvent('start');
   requestAnimationFrame(tick);
 }
 
@@ -635,6 +670,7 @@ function endGame(won = false) {
   gameOverScreen.classList.add('active');
   submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
   submitScoreBtn.disabled = submittedThisRound;
+  savePacmanEvent('end', { won });
   loadLeaderboard().catch(() => {});
 }
 
