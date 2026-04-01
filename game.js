@@ -106,36 +106,50 @@ const firebaseConfig = {
 };
 let db = null;
 let firestoreAvailable = false;
+let pacmanSaveDocId = null;
 
 async function initFirebase() {
   try {
-    const [{ initializeApp }, { getFirestore, collection, addDoc, query, orderBy, limit, getDocs }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, collection, addDoc, doc, updateDoc, query, orderBy, limit, getDocs }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
     ]);
     const app = initializeApp(firebaseConfig);
-    db = { ref: getFirestore(app), collection, addDoc, query, orderBy, limit, getDocs };
+    db = { ref: getFirestore(app), collection, addDoc, doc, updateDoc, query, orderBy, limit, getDocs };
     firestoreAvailable = true;
   } catch (err) {
     console.warn('Firestore unavailable, using local leaderboard fallback.', err);
   }
 }
 
-async function savePacmanEvent(eventType, extra = {}) {
+async function startPacmanSave() {
   if (!firestoreAvailable) return;
   try {
-    await db.addDoc(db.collection(db.ref, 'pacmansave'), {
-      eventType,
+    const ref = await db.addDoc(db.collection(db.ref, 'pacmansave'), {
+      status: 'started',
       name: playerName,
       phone: playerPhone,
+      startedAt: Date.now()
+    });
+    pacmanSaveDocId = ref.id;
+  } catch (err) {
+    console.warn('Failed to create pacmansave start record.', err);
+  }
+}
+
+async function endPacmanSave(won) {
+  if (!firestoreAvailable || !pacmanSaveDocId) return;
+  try {
+    await db.updateDoc(db.doc(db.ref, 'pacmansave', pacmanSaveDocId), {
+      status: 'ended',
+      won,
       score,
       level,
       lives,
-      timestamp: Date.now(),
-      ...extra
+      endedAt: Date.now()
     });
   } catch (err) {
-    console.warn(`Failed to save ${eventType} event.`, err);
+    console.warn('Failed to update pacmansave end record.', err);
   }
 }
 
@@ -285,6 +299,7 @@ function resetGame() {
   submittedThisRound = false;
   submitScoreBtn.disabled = false;
   remainingTime = currentLevelConfig().timeLimit;
+  pacmanSaveDocId = null;
   setupLevel(true);
 }
 
@@ -604,7 +619,7 @@ function startGame() {
   gameState = 'playing';
   levelStartTime = performance.now();
   lastFrame = levelStartTime;
-  savePacmanEvent('start');
+  startPacmanSave();
   requestAnimationFrame(tick);
 }
 
@@ -670,7 +685,7 @@ function endGame(won = false) {
   gameOverScreen.classList.add('active');
   submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
   submitScoreBtn.disabled = submittedThisRound;
-  savePacmanEvent('end', { won });
+  endPacmanSave(won);
   loadLeaderboard().catch(() => {});
 }
 
