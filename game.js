@@ -12,6 +12,7 @@ const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const gameWrap = document.getElementById('gameWrap');
 const playerNameInput = document.getElementById('playerName');
+const playerPhoneInput = document.getElementById('playerPhone');
 const finalName = document.getElementById('finalName');
 const finalScore = document.getElementById('finalScore');
 const submitStatus = document.getElementById('submitStatus');
@@ -76,6 +77,7 @@ let levelStartTime = 0;
 let score = 0;
 let lives = 3;
 let playerName = 'Player';
+let playerPhone = '';
 let speedBoostUntil = 0;
 let levelTransitionUntil = 0;
 let submittedThisRound = false;
@@ -93,22 +95,61 @@ const LEVELS = [
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
-const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
+const firebaseConfig = {
+  apiKey: 'AIzaSyDi0JNtflaGDXm6eohqVNXxB3O9KyxMXnw',
+  authDomain: 'valu-games.firebaseapp.com',
+  projectId: 'valu-games',
+  storageBucket: 'valu-games.firebasestorage.app',
+  messagingSenderId: '118411226267',
+  appId: '1:118411226267:web:003b210e3a298f69626a3e',
+  measurementId: 'G-240GP3YVCG'
+};
 let db = null;
 let firestoreAvailable = false;
+let pacmanSaveDocId = null;
 
 async function initFirebase() {
   try {
-    if (Object.values(firebaseConfig).includes('REPLACE_ME')) return;
-    const [{ initializeApp }, { getFirestore, collection, addDoc, query, orderBy, limit, getDocs }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, collection, addDoc, doc, updateDoc, query, orderBy, limit, getDocs }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
     ]);
     const app = initializeApp(firebaseConfig);
-    db = { ref: getFirestore(app), collection, addDoc, query, orderBy, limit, getDocs };
+    db = { ref: getFirestore(app), collection, addDoc, doc, updateDoc, query, orderBy, limit, getDocs };
     firestoreAvailable = true;
   } catch (err) {
     console.warn('Firestore unavailable, using local leaderboard fallback.', err);
+  }
+}
+
+async function startPacmanSave() {
+  if (!firestoreAvailable) return;
+  try {
+    const ref = await db.addDoc(db.collection(db.ref, 'pacmansave'), {
+      status: 'started',
+      name: playerName,
+      phone: playerPhone,
+      startedAt: Date.now()
+    });
+    pacmanSaveDocId = ref.id;
+  } catch (err) {
+    console.warn('Failed to create pacmansave start record.', err);
+  }
+}
+
+async function endPacmanSave(won) {
+  if (!firestoreAvailable || !pacmanSaveDocId) return;
+  try {
+    await db.updateDoc(db.doc(db.ref, 'pacmansave', pacmanSaveDocId), {
+      status: 'ended',
+      won,
+      score,
+      level,
+      lives,
+      endedAt: Date.now()
+    });
+  } catch (err) {
+    console.warn('Failed to update pacmansave end record.', err);
   }
 }
 
@@ -258,6 +299,7 @@ function resetGame() {
   submittedThisRound = false;
   submitScoreBtn.disabled = false;
   remainingTime = currentLevelConfig().timeLimit;
+  pacmanSaveDocId = null;
   setupLevel(true);
 }
 
@@ -559,7 +601,14 @@ function tick(ts) {
 }
 
 function startGame() {
-  playerName = playerNameInput.value.trim() || 'Player';
+  const nextName = playerNameInput.value.trim();
+  const nextPhone = playerPhoneInput.value.trim();
+  if (!nextName || !nextPhone) {
+    window.alert('Please enter both name and phone number.');
+    return;
+  }
+  playerName = nextName;
+  playerPhone = nextPhone;
   nameValue.textContent = playerName;
   submitStatus.textContent = '';
   leaderboardEl.innerHTML = '';
@@ -570,6 +619,7 @@ function startGame() {
   gameState = 'playing';
   levelStartTime = performance.now();
   lastFrame = levelStartTime;
+  startPacmanSave();
   requestAnimationFrame(tick);
 }
 
@@ -635,6 +685,7 @@ function endGame(won = false) {
   gameOverScreen.classList.add('active');
   submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
   submitScoreBtn.disabled = submittedThisRound;
+  endPacmanSave(won);
   loadLeaderboard().catch(() => {});
 }
 
