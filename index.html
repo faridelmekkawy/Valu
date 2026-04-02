@@ -25,12 +25,10 @@
         <img class="start-logo" src="assets/Value-Logo.png" alt="Sparkie" />
         <h1>Sparkie Dash</h1>
         <p class="subtitle">Start in the glowing START ZONE, chase coins, and dodge rogue sparks.</p>
-        <label for="playerName">Gamer Tag</label>
-        <input id="playerName" maxlength="16" placeholder="Enter your name" />
+        <p class="auto-player">Touch <strong>Start Game</strong> to auto-assign the next player number.</p>
         <button id="startBtn">Start Game</button>
         <ul>
-          <li>Move with <strong>Arrow Keys</strong> or <strong>WASD</strong>.</li>
-          <li>On touch devices: <strong>swipe anywhere on the game</strong> to move.</li>
+          <li>Use touch only: <strong>swipe anywhere on the game</strong> to move.</li>
           <li>Collect dots (+1 each) and power coins (+10 to +100).</li>
           <li>Each level lasts 30 seconds. Survive all 3 harder levels.</li>
         </ul>
@@ -45,13 +43,11 @@
         <h2>Game Over</h2>
         <p><span id="finalName">Player</span>, your final score is:</p>
         <p id="finalScore">0</p>
+        <img id="jackpotCard" class="jackpot-card" src="assets/jackpot-card.svg" alt="Congratulations jackpot prize card" />
         <div class="button-row">
-          <button id="submitScoreBtn">Submit Score</button>
           <button id="playAgainBtn">Play Again</button>
         </div>
         <p id="submitStatus"></p>
-        <h3>Top Sparks</h3>
-        <ol id="leaderboard"></ol>
       </section>
     </main>
   </div>

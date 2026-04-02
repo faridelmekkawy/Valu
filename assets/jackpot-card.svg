@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-label="Congratulations you just won a ticket to the jackpot">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#42c97a"/>
+      <stop offset="45%" stop-color="#10aeb4"/>
+      <stop offset="100%" stop-color="#ff5d2f"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1400" height="900" rx="42" fill="url(#bg)"/>
+  <text x="70" y="170" font-size="86" font-family="Segoe UI, Arial, sans-serif" font-weight="900" fill="#fff">congratulations!</text>
+  <text x="70" y="265" font-size="76" font-family="Segoe UI, Arial, sans-serif" font-weight="900" fill="#fff">YOU JUST WON</text>
+  <text x="70" y="360" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="900" fill="#ffe84a">A TICKET TO THE</text>
+  <text x="70" y="500" font-size="130" font-family="Segoe UI, Arial, sans-serif" font-weight="900" fill="#fff" filter="url(#shadow)">JACKPOT</text>
+
+  <g transform="translate(720,430) rotate(18)">
+    <rect x="0" y="0" width="390" height="420" rx="36" fill="#6c3eb1" filter="url(#shadow)"/>
+    <rect x="26" y="26" width="338" height="368" rx="24" fill="#ffeb3b"/>
+    <rect x="70" y="165" width="250" height="120" rx="14" fill="#6c3eb1"/>
+    <text x="196" y="243" text-anchor="middle" font-size="64" font-family="Segoe UI, Arial, sans-serif" font-weight="900" fill="#ffeb3b">JACKPOT!</text>
+  </g>
+
+  <circle cx="1220" cy="135" r="58" fill="#ffd34a"/>
+  <circle cx="1305" cy="220" r="43" fill="#ffd34a"/>
+  <circle cx="1165" cy="260" r="36" fill="#ffd34a"/>
+</svg>

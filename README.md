@@ -1,6 +1,6 @@
 # Sparkie Dash
 
-Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla JavaScript, using provided image assets and optional Firebase Firestore leaderboard support.
+Sparkie Dash is a touch-first maze arcade game built with HTML, CSS, and vanilla JavaScript. It supports Firebase Firestore session tracking for arcade floors and a separate usher registration console.
 
 ## Run locally
 
@@ -8,42 +8,41 @@ Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla J
    ```bash
    python3 -m http.server 8080
    ```
-2. Open `http://localhost:8080`.
-3. Enter a gamer tag and press **Start Game**.
+2. Open the game at `http://localhost:8080`.
+3. Open usher registration at `http://localhost:8080/registration/`.
 
-## Controls
+## Arcade flow (no keyboard required)
 
-- Keyboard: Arrow keys or WASD.
-- Touch: swipe on the game canvas to move in the swipe direction.
-- The player always respawns in the glowing **START** area for clear orientation.
+- Players tap **Start Game** and are auto-assigned a sequential number (`Player 1`, `Player 2`, …).
+- The counter is persisted in localStorage (`sparkie_dash_next_player_number`).
+- Session lifecycle is written to Firestore collection `sparkie_dash_sessions`:
+  - on game start: `status: "playing"`, current score, player number
+  - on game end: `status: "finished"`, final score
 
-## Replace assets
+## Registration console (`/registration/`)
 
-- Player sprite: `assets/sparkie_player.png`
-- Logo: `assets/Value-Logo.png`
-- Coins:
-  - `assets/coins/coin_heart.png`
-  - `assets/coins/coin_wink.png`
-  - `assets/coins/coin_card.png`
-  - `assets/coins/coin_token.png`
+- Uses Firestore `onSnapshot` for real-time updates.
+- Shows sessions ordered by most recent `createdAtMs`.
+- Ushers can tap a session and attach:
+  - `realName`
+  - `phone`
 
-Keep the same file names to avoid code changes. If any image is missing, the game renders fallback placeholder shapes.
+## Offline queueing
 
-## Firestore leaderboard setup
+If Firebase is unavailable or the device is offline:
+
+- Session operations are queued in localStorage (`sparkie_dash_session_queue`).
+- A local `localSessionId -> Firestore doc id` map is kept in `sparkie_dash_session_doc_map`.
+- Queue flush is attempted:
+  - on app start
+  - whenever the browser `online` event fires
+
+## Firestore setup
 
 1. Create a Firebase project and Firestore database.
-2. In `game.js`, update `firebaseConfig` values (`apiKey`, `authDomain`, `projectId`).
-3. Ensure Firestore security rules allow writes/reads for your event setup.
-4. Scores are stored in collection `sparkie_dash_scores`.
+2. Update `firebaseConfig` in both:
+   - `game.js`
+   - `registration/registration.js`
+3. Configure Firestore rules appropriate for your event environment.
 
-If Firebase is not configured, leaderboard automatically falls back to local browser storage.
-
-## Deploy
-
-Deploy as a static site to any host (Firebase Hosting, Netlify, Vercel, GitHub Pages, or Nginx).
-
-Basic Firebase Hosting path:
-1. `npm install -g firebase-tools`
-2. `firebase login`
-3. `firebase init hosting` (set public dir to current project root)
-4. `firebase deploy`
+If Firebase is not configured, the game still runs, and session writes are queued locally until Firebase becomes available.
