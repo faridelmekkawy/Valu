@@ -48,7 +48,11 @@ function renderSession(docSnap) {
 async function bootstrap() {
   const fire = await initFirestore();
   if (!fire.ready) {
-    statusEl.textContent = 'Firestore is unavailable. Check Firebase config/network.';
+    if (fire.reason === 'missing-config') {
+      statusEl.textContent = 'Firestore config is missing. Set window.__FIREBASE_CONFIG__ or firebase_config in localStorage.';
+    } else {
+      statusEl.textContent = 'Firestore is unavailable. Check Firebase config/network.';
+    }
     return;
   }
 

@@ -33,7 +33,10 @@ Keep the same file names to avoid code changes. If any image is missing, the gam
 ## Firestore session setup
 
 1. Create a Firebase project and Firestore database.
-2. In `firebaseClient.js`, update `firebaseConfig` values (`apiKey`, `authDomain`, `projectId`).
+2. Provide Firebase config using one of:
+   - `window.__FIREBASE_CONFIG__` (or `window.FIREBASE_CONFIG`) before app scripts run, or
+   - `localStorage.setItem('firebase_config', JSON.stringify({ apiKey, authDomain, projectId }))`, or
+   - hardcode values in `firebaseClient.js` default config.
 3. Ensure Firestore security rules allow writes/reads for your event setup.
 4. Sessions are stored only in collection `pacmansave`.
 5. The gameplay page queues session writes in `localStorage` if offline, then retries when the browser comes online.

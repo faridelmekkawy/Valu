@@ -1,4 +1,4 @@
-const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
+const defaultFirebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
 
 const OFFLINE_QUEUE_KEY = 'pacmansave_offline_queue_v1';
 const PACMAN_COLLECTION = 'pacmansave';
@@ -6,8 +6,42 @@ const PACMAN_COLLECTION = 'pacmansave';
 let firestoreApi = null;
 let db = null;
 
-function hasValidConfig() {
-  return !Object.values(firebaseConfig).includes('REPLACE_ME');
+function readConfigFromGlobal() {
+  const win = typeof window !== 'undefined' ? window : {};
+  return win.__FIREBASE_CONFIG__ || win.FIREBASE_CONFIG || null;
+}
+
+function readConfigFromMeta() {
+  const meta = document.querySelector('meta[name=\"firebase-config\"]');
+  if (!meta?.content) return null;
+  try {
+    return JSON.parse(meta.content);
+  } catch {
+    return null;
+  }
+}
+
+function readConfigFromStorage() {
+  const raw = localStorage.getItem('firebase_config');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function resolveFirebaseConfig() {
+  const candidate = readConfigFromGlobal() || readConfigFromMeta() || readConfigFromStorage() || defaultFirebaseConfig;
+  return {
+    apiKey: candidate.apiKey || 'REPLACE_ME',
+    authDomain: candidate.authDomain || 'REPLACE_ME',
+    projectId: candidate.projectId || 'REPLACE_ME'
+  };
+}
+
+function hasValidConfig(config) {
+  return !Object.values(config).includes('REPLACE_ME');
 }
 
 export function isFirestoreReady() {
@@ -16,7 +50,8 @@ export function isFirestoreReady() {
 
 export async function initFirestore() {
   if (isFirestoreReady()) return { ready: true };
-  if (!hasValidConfig()) return { ready: false, reason: 'missing-config' };
+  const firebaseConfig = resolveFirebaseConfig();
+  if (!hasValidConfig(firebaseConfig)) return { ready: false, reason: 'missing-config' };
 
   try {
     const [{ initializeApp }, firestore] = await Promise.all([
