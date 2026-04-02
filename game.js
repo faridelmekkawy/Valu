@@ -1,3 +1,11 @@
+import {
+  initFirestore,
+  upsertSessionWithQueue,
+  flushQueuedSessionOps,
+  registerOnlineFlushListener,
+  createSessionId
+} from './firebaseClient.js';
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -11,18 +19,18 @@ const coinLegend = document.getElementById('coinLegend');
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const gameWrap = document.getElementById('gameWrap');
-const playerNameInput = document.getElementById('playerName');
+const playerLabel = document.getElementById('playerLabel');
 const finalName = document.getElementById('finalName');
 const finalScore = document.getElementById('finalScore');
 const submitStatus = document.getElementById('submitStatus');
-const leaderboardEl = document.getElementById('leaderboard');
-const submitScoreBtn = document.getElementById('submitScoreBtn');
 const levelBanner = document.getElementById('levelBanner');
 
 const tileSize = 32;
 const mazeCols = canvas.width / tileSize;
 const mazeRows = canvas.height / tileSize;
 const START_TILE = { col: 1, row: 1 };
+
+const PLAYER_COUNTER_KEY = 'pacmansave_player_counter';
 
 const mazeLayout = [
   '111111111111111111111111111111',
@@ -76,9 +84,10 @@ let levelStartTime = 0;
 let score = 0;
 let lives = 3;
 let playerName = 'Player';
+let playerNumber = 1;
+let currentSessionId = '';
 let speedBoostUntil = 0;
 let levelTransitionUntil = 0;
-let submittedThisRound = false;
 
 const particles = [];
 const coins = [];
@@ -93,23 +102,21 @@ const LEVELS = [
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
-const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
-let db = null;
-let firestoreAvailable = false;
+function readPlayerCounter() {
+  const raw = Number(localStorage.getItem(PLAYER_COUNTER_KEY));
+  if (!Number.isFinite(raw) || raw < 0) return 0;
+  return Math.floor(raw);
+}
 
-async function initFirebase() {
-  try {
-    if (Object.values(firebaseConfig).includes('REPLACE_ME')) return;
-    const [{ initializeApp }, { getFirestore, collection, addDoc, query, orderBy, limit, getDocs }] = await Promise.all([
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
-    ]);
-    const app = initializeApp(firebaseConfig);
-    db = { ref: getFirestore(app), collection, addDoc, query, orderBy, limit, getDocs };
-    firestoreAvailable = true;
-  } catch (err) {
-    console.warn('Firestore unavailable, using local leaderboard fallback.', err);
-  }
+function nextPlayerNumber() {
+  const next = readPlayerCounter() + 1;
+  localStorage.setItem(PLAYER_COUNTER_KEY, String(next));
+  return next;
+}
+
+function refreshPlayerPreview() {
+  const upcoming = readPlayerCounter() + 1;
+  playerLabel.textContent = `Player ${upcoming}`;
 }
 
 function loadImage(src) {
@@ -171,7 +178,6 @@ function startPosition() {
   return { x: START_TILE.col * tileSize + tileSize / 2, y: START_TILE.row * tileSize + tileSize / 2 };
 }
 
-
 function currentLevelConfig() {
   return LEVELS[level - 1];
 }
@@ -187,6 +193,7 @@ function populateDots() {
     }
   }
 }
+
 function randomOpenPosition() {
   while (true) {
     const col = Math.floor(Math.random() * mazeCols);
@@ -255,8 +262,6 @@ function resetGame() {
   level = 1;
   speedBoostUntil = 0;
   levelTransitionUntil = 0;
-  submittedThisRound = false;
-  submitScoreBtn.disabled = false;
   remainingTime = currentLevelConfig().timeLimit;
   setupLevel(true);
 }
@@ -353,7 +358,7 @@ function updatePlayer(dt, now) {
 function updateEnemies(dt, now) {
   for (const e of enemies) {
     if (now > e.turnAt || (Math.abs(e.vx) < 1 && Math.abs(e.vy) < 1)) {
-      const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random() - 0.5);
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].sort(() => Math.random() - 0.5);
       for (const [dx, dy] of dirs) {
         if (!hitWallCircle(e.x + dx * tileSize * 0.8, e.y + dy * tileSize * 0.8, e.r)) {
           e.vx = dx * e.speed;
@@ -412,7 +417,6 @@ function drawMaze(now) {
   ctx.fillText('START', sx + 8, sy + tileSize * 2 + 13 + Math.sin(now / 180) * 1.5);
   ctx.restore();
 }
-
 
 function drawDots() {
   ctx.fillStyle = '#ffe8a3';
@@ -533,7 +537,7 @@ function tick(ts) {
     }
 
     if (lives <= 0) {
-      endGame();
+      endGame(false);
       return;
     }
 
@@ -558,12 +562,32 @@ function tick(ts) {
   requestAnimationFrame(tick);
 }
 
-function startGame() {
-  playerName = playerNameInput.value.trim() || 'Player';
+async function startGame() {
+  playerNumber = nextPlayerNumber();
+  playerName = `Player ${playerNumber}`;
+  currentSessionId = createSessionId(playerNumber);
+
+  playerLabel.textContent = playerName;
   nameValue.textContent = playerName;
   submitStatus.textContent = '';
-  leaderboardEl.innerHTML = '';
   resetGame();
+
+  const sessionPayload = {
+    startedAt: Date.now(),
+    endedAt: 0,
+    score: 0,
+    status: 'playing',
+    level: 1,
+    lives: 3,
+    won: false,
+    name: '',
+    phone: '',
+    playerNumber
+  };
+
+  await upsertSessionWithQueue(currentSessionId, sessionPayload, { merge: false });
+  refreshPlayerPreview();
+
   startScreen.classList.remove('active');
   gameOverScreen.classList.remove('active');
   gameWrap.style.visibility = 'visible';
@@ -571,48 +595,6 @@ function startGame() {
   levelStartTime = performance.now();
   lastFrame = levelStartTime;
   requestAnimationFrame(tick);
-}
-
-async function submitScore() {
-  if (!score || submittedThisRound) return;
-  submitStatus.textContent = 'Submitting...';
-  submitScoreBtn.disabled = true;
-  try {
-    if (firestoreAvailable) {
-      await db.addDoc(db.collection(db.ref, 'sparkie_dash_scores'), { name: playerName, score, createdAt: Date.now() });
-    } else {
-      const local = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]');
-      local.push({ name: playerName, score, createdAt: Date.now() });
-      localStorage.setItem('sparkie_dash_scores', JSON.stringify(local));
-    }
-
-    submittedThisRound = true;
-    submitStatus.textContent = 'Score submitted! Returning to home...';
-    await loadLeaderboard();
-    setTimeout(() => {
-      goHome(true);
-    }, 700);
-  } catch (err) {
-    submitStatus.textContent = 'Could not submit score.';
-    submitScoreBtn.disabled = false;
-  }
-}
-
-async function loadLeaderboard() {
-  let scores = [];
-  if (firestoreAvailable) {
-    const q = db.query(db.collection(db.ref, 'sparkie_dash_scores'), db.orderBy('score', 'desc'), db.limit(7));
-    const snap = await db.getDocs(q);
-    scores = snap.docs.map((d) => d.data());
-  } else {
-    scores = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]').sort((a, b) => b.score - a.score).slice(0, 7);
-  }
-  leaderboardEl.innerHTML = '';
-  scores.forEach((s) => {
-    const li = document.createElement('li');
-    li.textContent = `${s.name} — ${s.score}`;
-    leaderboardEl.appendChild(li);
-  });
 }
 
 function goHome(reset = false) {
@@ -626,16 +608,28 @@ function goHome(reset = false) {
   if (reset) resetGame();
 }
 
-function endGame(won = false) {
+async function endGame(won = false) {
   gameState = 'over';
   levelBanner.classList.remove('show');
   gameWrap.style.visibility = 'hidden';
   finalName.textContent = playerName;
   finalScore.textContent = String(score);
   gameOverScreen.classList.add('active');
-  submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
-  submitScoreBtn.disabled = submittedThisRound;
-  loadLeaderboard().catch(() => {});
+
+  const endPayload = {
+    endedAt: Date.now(),
+    status: 'ended',
+    score,
+    level,
+    lives,
+    won
+  };
+
+  if (currentSessionId) {
+    await upsertSessionWithQueue(currentSessionId, endPayload, { merge: true });
+  }
+
+  submitStatus.textContent = won ? 'You cleared all 3 levels!' : 'Session saved.';
 }
 
 document.addEventListener('keydown', (e) => {
@@ -684,8 +678,13 @@ document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('playAgainBtn').addEventListener('click', () => {
   goHome(true);
 });
-submitScoreBtn.addEventListener('click', submitScore);
 
-initFirebase();
-loadLeaderboard().catch(() => {});
-buildCoinLegend();
+(async function bootstrap() {
+  const fire = await initFirestore();
+  registerOnlineFlushListener();
+  if (fire.ready) {
+    await flushQueuedSessionOps();
+  }
+  refreshPlayerPreview();
+  buildCoinLegend();
+})();
