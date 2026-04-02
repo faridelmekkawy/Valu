@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparkie Dash Registration</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    body { overflow: auto; }
+    #app { max-width: 980px; margin: 0 auto; height: auto; min-height: 100dvh; }
+    .registration-wrap { width: min(96vw, 980px); background: rgba(24,24,24,.95); border: 2px solid rgba(87,190,177,.5); border-radius: 20px; padding: 1rem; }
+    .session-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .65rem; }
+    .session-item { background: #111; border: 1px solid rgba(87,190,177,.45); border-radius: 14px; padding: .85rem; cursor: pointer; }
+    .session-item h3, .session-item p { margin: .15rem 0; }
+    .session-item small { color: #9fd7cf; }
+    .form-card { margin-top: .9rem; border-top: 1px solid rgba(87,190,177,.35); padding-top: .9rem; }
+    .field { display: grid; gap: .35rem; margin-bottom: .7rem; }
+    .field input { min-width: 0; width: 100%; }
+    .status-line { min-height: 1.2rem; color: #9fd7cf; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="hud-shell">
+      <img id="brandLogo" src="../assets/Value-Logo.png" alt="Sparkie logo" />
+      <div class="hud"><span>Registration Console</span></div>
+    </header>
+
+    <main>
+      <section class="registration-wrap">
+        <h1>Live Sessions</h1>
+        <p>Tap a player session to attach their real name and phone number.</p>
+        <p id="connectionStatus" class="status-line"></p>
+        <ul id="sessionList" class="session-list"></ul>
+
+        <form id="detailsForm" class="form-card" hidden>
+          <h2 id="selectedSessionTitle">Session</h2>
+          <div class="field">
+            <label for="realName">Real Name</label>
+            <input id="realName" required maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="phone">Phone Number</label>
+            <input id="phone" required maxlength="30" />
+          </div>
+          <button type="submit">Save Details</button>
+          <p id="saveStatus" class="status-line"></p>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./registration.js"></script>
+</body>
+</html>

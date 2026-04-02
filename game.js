@@ -11,12 +11,9 @@ const coinLegend = document.getElementById('coinLegend');
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const gameWrap = document.getElementById('gameWrap');
-const playerNameInput = document.getElementById('playerName');
 const finalName = document.getElementById('finalName');
 const finalScore = document.getElementById('finalScore');
 const submitStatus = document.getElementById('submitStatus');
-const leaderboardEl = document.getElementById('leaderboard');
-const submitScoreBtn = document.getElementById('submitScoreBtn');
 const levelBanner = document.getElementById('levelBanner');
 
 const tileSize = 32;
@@ -78,7 +75,6 @@ let lives = 3;
 let playerName = 'Player';
 let speedBoostUntil = 0;
 let levelTransitionUntil = 0;
-let submittedThisRound = false;
 
 const particles = [];
 const coins = [];
@@ -94,22 +90,144 @@ const LEVELS = [
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
 const firebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
+const PLAYER_COUNTER_KEY = 'sparkie_dash_next_player_number';
+const QUEUED_OPS_KEY = 'sparkie_dash_session_queue';
+const SESSION_DOC_MAP_KEY = 'sparkie_dash_session_doc_map';
 let db = null;
 let firestoreAvailable = false;
+let currentSession = null;
 
 async function initFirebase() {
   try {
     if (Object.values(firebaseConfig).includes('REPLACE_ME')) return;
-    const [{ initializeApp }, { getFirestore, collection, addDoc, query, orderBy, limit, getDocs }] = await Promise.all([
+    const [{ initializeApp }, { getFirestore, collection, addDoc, doc, updateDoc, serverTimestamp }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
     ]);
     const app = initializeApp(firebaseConfig);
-    db = { ref: getFirestore(app), collection, addDoc, query, orderBy, limit, getDocs };
+    db = { ref: getFirestore(app), collection, addDoc, doc, updateDoc, serverTimestamp };
     firestoreAvailable = true;
   } catch (err) {
-    console.warn('Firestore unavailable, using local leaderboard fallback.', err);
+    console.warn('Firestore unavailable, session writes will be queued locally.', err);
   }
+}
+
+function getQueuedOps() {
+  return JSON.parse(localStorage.getItem(QUEUED_OPS_KEY) || '[]');
+}
+
+function saveQueuedOps(ops) {
+  localStorage.setItem(QUEUED_OPS_KEY, JSON.stringify(ops));
+}
+
+function queueSessionOp(op) {
+  const ops = getQueuedOps();
+  ops.push(op);
+  saveQueuedOps(ops);
+}
+
+function getSessionDocMap() {
+  return JSON.parse(localStorage.getItem(SESSION_DOC_MAP_KEY) || '{}');
+}
+
+function saveSessionDocMap(map) {
+  localStorage.setItem(SESSION_DOC_MAP_KEY, JSON.stringify(map));
+}
+
+function createLocalSessionId() {
+  return `local-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+async function createSessionRecord(session) {
+  if (!firestoreAvailable) {
+    queueSessionOp({ type: 'create', localSessionId: session.localSessionId, playerNumber: session.playerNumber, score: 0, status: 'playing', createdAtMs: Date.now() });
+    return;
+  }
+
+  try {
+    const ref = await db.addDoc(db.collection(db.ref, 'sparkie_dash_sessions'), {
+      localSessionId: session.localSessionId,
+      playerNumber: session.playerNumber,
+      score: 0,
+      status: 'playing',
+      createdAtMs: Date.now(),
+      createdAt: db.serverTimestamp(),
+      updatedAt: db.serverTimestamp()
+    });
+    const map = getSessionDocMap();
+    map[session.localSessionId] = ref.id;
+    saveSessionDocMap(map);
+    session.docId = ref.id;
+  } catch (err) {
+    queueSessionOp({ type: 'create', localSessionId: session.localSessionId, playerNumber: session.playerNumber, score: 0, status: 'playing', createdAtMs: Date.now() });
+  }
+}
+
+async function finishSessionRecord(session) {
+  const payload = { score, status: 'finished', finishedAtMs: Date.now() };
+  const map = getSessionDocMap();
+  const docId = session.docId || map[session.localSessionId];
+
+  if (!firestoreAvailable || !docId) {
+    queueSessionOp({ type: 'update', localSessionId: session.localSessionId, ...payload });
+    return;
+  }
+
+  try {
+    await db.updateDoc(db.doc(db.ref, 'sparkie_dash_sessions', docId), { ...payload, updatedAt: db.serverTimestamp() });
+  } catch (err) {
+    queueSessionOp({ type: 'update', localSessionId: session.localSessionId, ...payload });
+  }
+}
+
+async function flushQueuedSessions() {
+  if (!firestoreAvailable || !navigator.onLine) return;
+  const ops = getQueuedOps();
+  if (!ops.length) return;
+
+  const remaining = [];
+  const map = getSessionDocMap();
+
+  for (const op of ops) {
+    try {
+      if (op.type === 'create') {
+        if (map[op.localSessionId]) continue;
+        const ref = await db.addDoc(db.collection(db.ref, 'sparkie_dash_sessions'), {
+          localSessionId: op.localSessionId,
+          playerNumber: op.playerNumber,
+          score: op.score,
+          status: op.status,
+          createdAtMs: op.createdAtMs,
+          createdAt: db.serverTimestamp(),
+          updatedAt: db.serverTimestamp()
+        });
+        map[op.localSessionId] = ref.id;
+      } else {
+        const updateDocId = map[op.localSessionId];
+        if (!updateDocId) {
+          remaining.push(op);
+          continue;
+        }
+        await db.updateDoc(db.doc(db.ref, 'sparkie_dash_sessions', updateDocId), {
+          score: op.score,
+          status: op.status,
+          finishedAtMs: op.finishedAtMs,
+          updatedAt: db.serverTimestamp()
+        });
+      }
+    } catch (err) {
+      remaining.push(op);
+    }
+  }
+
+  saveSessionDocMap(map);
+  saveQueuedOps(remaining);
+}
+
+function assignNextPlayerNumber() {
+  const current = Number(localStorage.getItem(PLAYER_COUNTER_KEY) || '0') + 1;
+  localStorage.setItem(PLAYER_COUNTER_KEY, String(current));
+  return current;
 }
 
 function loadImage(src) {
@@ -255,8 +373,6 @@ function resetGame() {
   level = 1;
   speedBoostUntil = 0;
   levelTransitionUntil = 0;
-  submittedThisRound = false;
-  submitScoreBtn.disabled = false;
   remainingTime = currentLevelConfig().timeLimit;
   setupLevel(true);
 }
@@ -558,12 +674,14 @@ function tick(ts) {
   requestAnimationFrame(tick);
 }
 
-function startGame() {
-  playerName = playerNameInput.value.trim() || 'Player';
+async function startGame() {
+  const playerNumber = assignNextPlayerNumber();
+  playerName = `Player ${playerNumber}`;
+  currentSession = { localSessionId: createLocalSessionId(), playerNumber, docId: null };
   nameValue.textContent = playerName;
   submitStatus.textContent = '';
-  leaderboardEl.innerHTML = '';
   resetGame();
+  await createSessionRecord(currentSession);
   startScreen.classList.remove('active');
   gameOverScreen.classList.remove('active');
   gameWrap.style.visibility = 'visible';
@@ -571,48 +689,6 @@ function startGame() {
   levelStartTime = performance.now();
   lastFrame = levelStartTime;
   requestAnimationFrame(tick);
-}
-
-async function submitScore() {
-  if (!score || submittedThisRound) return;
-  submitStatus.textContent = 'Submitting...';
-  submitScoreBtn.disabled = true;
-  try {
-    if (firestoreAvailable) {
-      await db.addDoc(db.collection(db.ref, 'sparkie_dash_scores'), { name: playerName, score, createdAt: Date.now() });
-    } else {
-      const local = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]');
-      local.push({ name: playerName, score, createdAt: Date.now() });
-      localStorage.setItem('sparkie_dash_scores', JSON.stringify(local));
-    }
-
-    submittedThisRound = true;
-    submitStatus.textContent = 'Score submitted! Returning to home...';
-    await loadLeaderboard();
-    setTimeout(() => {
-      goHome(true);
-    }, 700);
-  } catch (err) {
-    submitStatus.textContent = 'Could not submit score.';
-    submitScoreBtn.disabled = false;
-  }
-}
-
-async function loadLeaderboard() {
-  let scores = [];
-  if (firestoreAvailable) {
-    const q = db.query(db.collection(db.ref, 'sparkie_dash_scores'), db.orderBy('score', 'desc'), db.limit(7));
-    const snap = await db.getDocs(q);
-    scores = snap.docs.map((d) => d.data());
-  } else {
-    scores = JSON.parse(localStorage.getItem('sparkie_dash_scores') || '[]').sort((a, b) => b.score - a.score).slice(0, 7);
-  }
-  leaderboardEl.innerHTML = '';
-  scores.forEach((s) => {
-    const li = document.createElement('li');
-    li.textContent = `${s.name} — ${s.score}`;
-    leaderboardEl.appendChild(li);
-  });
 }
 
 function goHome(reset = false) {
@@ -634,19 +710,10 @@ function endGame(won = false) {
   finalScore.textContent = String(score);
   gameOverScreen.classList.add('active');
   submitStatus.textContent = won ? 'You cleared all 3 levels!' : '';
-  submitScoreBtn.disabled = submittedThisRound;
-  loadLeaderboard().catch(() => {});
+  if (currentSession) {
+    finishSessionRecord(currentSession).catch(() => {});
+  }
 }
-
-document.addEventListener('keydown', (e) => {
-  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  keys.add(key);
-});
-
-document.addEventListener('keyup', (e) => {
-  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-  keys.delete(key);
-});
 
 canvas.addEventListener('pointerdown', (e) => {
   if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
@@ -684,8 +751,7 @@ document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('playAgainBtn').addEventListener('click', () => {
   goHome(true);
 });
-submitScoreBtn.addEventListener('click', submitScore);
+window.addEventListener('online', () => { flushQueuedSessions().catch(() => {}); });
 
-initFirebase();
-loadLeaderboard().catch(() => {});
+initFirebase().then(() => flushQueuedSessions().catch(() => {}));
 buildCoinLegend();
