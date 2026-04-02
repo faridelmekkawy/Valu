@@ -33,7 +33,7 @@ Keep the same file names to avoid code changes. If any image is missing, the gam
 ## Firestore session setup
 
 1. Create a Firebase project and Firestore database.
-2. Provide Firebase config using one of:
+2. Firebase is preconfigured for `valu-games`. To override for another project, provide config using one of:
    - `window.__FIREBASE_CONFIG__` (or `window.FIREBASE_CONFIG`) before app scripts run, or
    - `localStorage.setItem('firebase_config', JSON.stringify({ apiKey, authDomain, projectId }))`, or
    - hardcode values in `firebaseClient.js` default config.

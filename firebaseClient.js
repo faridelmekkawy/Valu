@@ -1,4 +1,12 @@
-const defaultFirebaseConfig = { apiKey: 'REPLACE_ME', authDomain: 'REPLACE_ME', projectId: 'REPLACE_ME' };
+const defaultFirebaseConfig = {
+  apiKey: 'AIzaSyDi0JNtflaGDXm6eohqVNXxB3O9KyxMXnw',
+  authDomain: 'valu-games.firebaseapp.com',
+  projectId: 'valu-games',
+  storageBucket: 'valu-games.firebasestorage.app',
+  messagingSenderId: '118411226267',
+  appId: '1:118411226267:web:003b210e3a298f69626a3e',
+  measurementId: 'G-240GP3YVCG'
+};
 
 const OFFLINE_QUEUE_KEY = 'pacmansave_offline_queue_v1';
 const PACMAN_COLLECTION = 'pacmansave';
@@ -36,7 +44,11 @@ function resolveFirebaseConfig() {
   return {
     apiKey: candidate.apiKey || 'REPLACE_ME',
     authDomain: candidate.authDomain || 'REPLACE_ME',
-    projectId: candidate.projectId || 'REPLACE_ME'
+    projectId: candidate.projectId || 'REPLACE_ME',
+    storageBucket: candidate.storageBucket,
+    messagingSenderId: candidate.messagingSenderId,
+    appId: candidate.appId,
+    measurementId: candidate.measurementId
   };
 }
 
