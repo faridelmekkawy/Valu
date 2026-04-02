@@ -104,6 +104,16 @@ ul { text-align: left; margin: 0.4rem auto 0; max-width: 560px; color: #e6e6e6; 
 #finalScore {
   font-size: clamp(2rem, 5vw, 3.4rem); margin: 0; color: var(--teal); text-shadow: 0 0 12px rgba(87, 190, 177, 0.4);
 }
+
+.turn-finished-card {
+  width: min(440px, 84vw);
+  max-height: 40vh;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 1px solid rgba(87, 190, 177, 0.5);
+  box-shadow: 0 0 20px rgba(87, 190, 177, 0.2);
+}
+
 #leaderboard { width: min(360px, 85vw); margin: 0; padding-left: 1.4rem; text-align: left; }
 
 .level-banner {
