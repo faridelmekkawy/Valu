@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Session Registration</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="registrationApp" class="registration-app">
+    <header class="registration-header">
+      <img src="/assets/Value-Logo.png" alt="Sparkie logo" />
+      <h1>Session Registration</h1>
+      <p>Tap a row to update name and phone in real time.</p>
+      <a class="link-btn" href="/">Back to Game</a>
+    </header>
+
+    <div id="registrationStatus" class="reg-status">Connecting...</div>
+
+    <section id="sessionsList" class="sessions-list" aria-live="polite"></section>
+  </div>
+
+  <template id="sessionTemplate">
+    <article class="session-card">
+      <button class="session-summary" type="button"></button>
+      <form class="session-form hidden">
+        <label>
+          Name
+          <input class="name-input" type="text" maxlength="40" />
+        </label>
+        <label>
+          Phone
+          <input class="phone-input" type="tel" maxlength="30" />
+        </label>
+        <div class="button-row">
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </article>
+  </template>
+
+  <script type="module" src="/registration/registration.js"></script>
+</body>
+</html>

@@ -122,3 +122,81 @@ ul { text-align: left; margin: 0.4rem auto 0; max-width: 560px; color: #e6e6e6; 
 .level-banner.show {
   display: flex;
 }
+
+.player-pill {
+  background: rgba(87, 190, 177, 0.15);
+  border: 1px solid rgba(87, 190, 177, 0.5);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+}
+
+.link-btn {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(180deg, #45d6c8, #2aa397);
+}
+
+.registration-app {
+  width: min(960px, 96vw);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.registration-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.registration-header img {
+  max-width: min(320px, 72vw);
+  max-height: 80px;
+}
+
+.reg-status {
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+
+.sessions-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.session-card {
+  border: 1px solid rgba(87, 190, 177, 0.5);
+  border-radius: 14px;
+  background: rgba(20, 20, 20, 0.9);
+  padding: 0.7rem;
+}
+
+.session-summary {
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  padding: 0.7rem;
+  line-height: 1.45;
+}
+
+.session-form {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.session-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.session-form input {
+  min-width: auto;
+  width: 100%;
+}
+
+.hidden {
+  display: none;
+}
