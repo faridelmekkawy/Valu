@@ -26,7 +26,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.7rem;
+  padding: max(0.55rem, env(safe-area-inset-top)) max(0.55rem, env(safe-area-inset-right)) max(0.55rem, env(safe-area-inset-bottom)) max(0.55rem, env(safe-area-inset-left));
   overflow: hidden;
 }
 .hud-shell { text-align: center; width: min(96vw, 980px); }
@@ -39,6 +39,9 @@ body {
   background: linear-gradient(180deg, #2a2a2a, #232323); border: 1px solid rgba(87, 190, 177, 0.5);
   border-radius: 999px; padding: 0.6rem 1.2rem; box-shadow: 0 0 16px rgba(87, 190, 177, 0.2);
   font-size: clamp(1rem, 1.5vw, 1.2rem);
+}
+.hud span {
+  white-space: nowrap;
 }
 .coin-legend {
   margin-top: 0.45rem;
@@ -78,6 +81,8 @@ main {
   box-shadow: 0 0 22px rgba(87, 190, 177, 0.15);
   touch-action: none;
   visibility: hidden;
+  width: 100%;
+  max-height: 100%;
 }
 #gameCanvas { width: 100%; display: block; aspect-ratio: 3 / 2; background: #141414; }
 .panel {
@@ -85,6 +90,7 @@ main {
   border-radius: 20px; padding: 1.2rem; display: none; flex-direction: column; align-items: center;
   justify-content: center; text-align: center; gap: 0.8rem;
   z-index: 2;
+  overflow-y: auto;
 }
 .panel.active { display: flex; }
 .start-logo { max-width: min(320px, 60vw); max-height: 80px; object-fit: contain; }
@@ -115,6 +121,89 @@ ul { text-align: left; margin: 0.4rem auto 0; max-width: 560px; color: #e6e6e6; 
 }
 
 #leaderboard { width: min(360px, 85vw); margin: 0; padding-left: 1.4rem; text-align: left; }
+
+@media (max-width: 900px) {
+  #brandLogo {
+    max-height: 76px;
+  }
+
+  .hud {
+    gap: 0.5rem 0.8rem;
+    border-radius: 16px;
+    padding: 0.5rem 0.75rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+  }
+
+  .coin-chip {
+    font-size: 0.78rem;
+    padding: 0.25rem 0.45rem;
+  }
+
+  .coin-chip img,
+  .coin-chip .fallback {
+    width: 22px;
+    height: 22px;
+  }
+
+  .panel {
+    padding: 1rem 0.85rem;
+    gap: 0.65rem;
+  }
+}
+
+@media (max-width: 600px) {
+  #app {
+    gap: 0.45rem;
+  }
+
+  .hud-shell,
+  main {
+    width: 100%;
+  }
+
+  #brandLogo {
+    max-width: 72vw;
+    max-height: 58px;
+  }
+
+  .hud {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    text-align: center;
+  }
+
+  .coin-legend {
+    gap: 0.35rem;
+  }
+
+  .coin-chip {
+    gap: 0.28rem;
+  }
+
+  .start-logo {
+    max-height: 58px;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  input {
+    min-width: 0;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  button {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  ul {
+    font-size: 0.92rem;
+    padding-left: 1.1rem;
+  }
+}
 
 .level-banner {
   position: absolute;
