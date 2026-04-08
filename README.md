@@ -1,6 +1,6 @@
-# Sparkie Dash
+# Sparkie Man
 
-Sparkie Dash is an original maze arcade game built with HTML, CSS, and vanilla JavaScript, with Firebase Firestore session tracking in the `pacmansave` collection.
+Sparkie Man is an original maze arcade game built with HTML, CSS, and vanilla JavaScript, with Firebase Firestore session tracking in the `pacmansave` collection.
 
 ## Run locally
 
