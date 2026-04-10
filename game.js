@@ -59,7 +59,7 @@ const coinDefs = {
   heart: { value: 10, rate: 0.52, img: 'assets/coins/coin_heart.png', color: '#57beb1' },
   wink: { value: 30, rate: 0.23, speedBoost: 3.5, img: 'assets/coins/coin_wink.png', color: '#7bf0df' },
   card: { value: 50, rate: 0.18, img: 'assets/coins/coin_card.png', color: '#81d8ce' },
-  token: { value: 100, rate: 0.07, img: 'assets/coins/coin_token.png', color: '#ef5f17' }
+  token: { value: 100, rate: 0.07, img: 'assets/coins/IMG_0296.png', color: '#ef5f17' }
 };
 
 const assets = {
