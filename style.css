@@ -86,6 +86,31 @@ main {
   justify-content: center; text-align: center; gap: 0.8rem;
   z-index: 2;
 }
+
+#startScreen {
+  background:
+    linear-gradient(180deg, rgba(10, 10, 10, 0.78), rgba(10, 10, 10, 0.86)),
+    url("SPARKIE GAMES TITLES-05.png") center / cover no-repeat;
+}
+
+.space-start-prompt {
+  margin: 0.15rem 0 0;
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  color: #fff7c9;
+  text-shadow: 0 0 10px rgba(239, 95, 23, 0.45);
+  animation: spacePulse 1.1s steps(1, end) infinite;
+}
+
+@keyframes spacePulse {
+  0%, 55% {
+    opacity: 1;
+  }
+  56%, 100% {
+    opacity: 0;
+  }
+}
 .panel.active { display: flex; }
 .start-logo { max-width: min(320px, 60vw); max-height: 80px; object-fit: contain; }
 h1, h2 { margin: 0; color: var(--primary); }

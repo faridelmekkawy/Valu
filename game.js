@@ -634,6 +634,13 @@ async function endGame(won = false) {
 
 document.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+  if ((e.code === 'Space' || key === ' ') && gameState === 'menu') {
+    e.preventDefault();
+    if (!e.repeat) startGame();
+    return;
+  }
+
   keys.add(key);
 });
 
