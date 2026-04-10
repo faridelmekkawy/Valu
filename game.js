@@ -116,7 +116,7 @@ function nextPlayerNumber() {
 
 function refreshPlayerPreview() {
   const upcoming = readPlayerCounter() + 1;
-  playerLabel.textContent = `Player ${upcoming}`;
+  if (playerLabel) playerLabel.textContent = `Player ${upcoming}`;
 }
 
 function loadImage(src) {
@@ -567,7 +567,7 @@ async function startGame() {
   playerName = `Player ${playerNumber}`;
   currentSessionId = createSessionId(playerNumber);
 
-  playerLabel.textContent = playerName;
+  if (playerLabel) playerLabel.textContent = playerName;
   nameValue.textContent = playerName;
   submitStatus.textContent = '';
   resetGame();
@@ -634,13 +634,6 @@ async function endGame(won = false) {
 
 document.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-
-  if ((e.code === 'Space' || key === ' ') && gameState === 'menu') {
-    e.preventDefault();
-    if (!e.repeat) startGame();
-    return;
-  }
-
   keys.add(key);
 });
 
