@@ -98,8 +98,30 @@ main {
 }
 
 #startBtn {
-  font-size: clamp(1rem, 2vw, 1.35rem);
-  letter-spacing: 0.08em;
+  position: absolute;
+  left: 50%;
+  top: 74%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  font-size: clamp(1.1rem, 2.6vw, 2rem);
+  letter-spacing: 0.14em;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow:
+    -2px -2px 0 #1d1d1d,
+     2px -2px 0 #1d1d1d,
+    -2px  2px 0 #1d1d1d,
+     2px  2px 0 #1d1d1d,
+     0 6px 0 rgba(42, 163, 151, 0.7);
+}
+
+#startBtn:hover {
+  transform: translate(-50%, -51%);
 }
 .panel.active { display: flex; }
 .start-logo { max-width: min(320px, 60vw); max-height: 80px; object-fit: contain; }
