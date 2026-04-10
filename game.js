@@ -88,6 +88,7 @@ let playerNumber = 1;
 let currentSessionId = '';
 let speedBoostUntil = 0;
 let levelTransitionUntil = 0;
+let autoHomeTimeout = 0;
 
 const particles = [];
 const coins = [];
@@ -116,7 +117,7 @@ function nextPlayerNumber() {
 
 function refreshPlayerPreview() {
   const upcoming = readPlayerCounter() + 1;
-  playerLabel.textContent = `Player ${upcoming}`;
+  if (playerLabel) playerLabel.textContent = `Player ${upcoming}`;
 }
 
 function loadImage(src) {
@@ -563,11 +564,16 @@ function tick(ts) {
 }
 
 async function startGame() {
+  if (autoHomeTimeout) {
+    clearTimeout(autoHomeTimeout);
+    autoHomeTimeout = 0;
+  }
+
   playerNumber = nextPlayerNumber();
   playerName = `Player ${playerNumber}`;
   currentSessionId = createSessionId(playerNumber);
 
-  playerLabel.textContent = playerName;
+  if (playerLabel) playerLabel.textContent = playerName;
   nameValue.textContent = playerName;
   submitStatus.textContent = '';
   resetGame();
@@ -598,6 +604,11 @@ async function startGame() {
 }
 
 function goHome(reset = false) {
+  if (autoHomeTimeout) {
+    clearTimeout(autoHomeTimeout);
+    autoHomeTimeout = 0;
+  }
+
   gameState = 'menu';
   levelBanner.classList.remove('show');
   levelBanner.textContent = '';
@@ -629,11 +640,22 @@ async function endGame(won = false) {
     await upsertSessionWithQueue(currentSessionId, endPayload, { merge: true });
   }
 
-  submitStatus.textContent = won ? 'You cleared all 3 levels!' : 'Session saved.';
+  submitStatus.textContent = won ? 'You cleared all 3 levels! Returning to home in 5s...' : 'Session saved. Returning to home in 5s...';
+
+  autoHomeTimeout = window.setTimeout(() => {
+    goHome(true);
+  }, 5000);
 }
 
 document.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+  if ((e.code === 'Space' || key === ' ') && gameState === 'menu') {
+    e.preventDefault();
+    if (!e.repeat) startGame();
+    return;
+  }
+
   keys.add(key);
 });
 

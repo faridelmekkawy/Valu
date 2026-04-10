@@ -22,18 +22,8 @@
 
     <main>
       <section id="startScreen" class="panel active">
-        <img class="start-logo" src="assets/Value-Logo.png" alt="Sparkie" />
-        <h1>Sparkie Man</h1>
-        <p class="subtitle">Start in the glowing START ZONE, chase coins, and dodge rogue sparks.</p>
-        <p class="player-pill">Current player will be <strong id="playerLabel">Player 1</strong></p>
-        <button id="startBtn">Tap to Start Game</button>
-        <ul>
-          <li>Swipe anywhere on the game to move.</li>
-          <li>Collect dots (+1 each) and power coins (+10 to +100).</li>
-          <li>Each level lasts 30 seconds. Survive all 3 harder levels.</li>
-        </ul>
+        <button id="startBtn" aria-label="Press button to start">PRESS BUTTON TO START</button>
       </section>
-
       <section id="gameWrap" class="game-wrap" aria-label="Sparkie Man game area">
         <canvas id="gameCanvas" width="960" height="640"></canvas>
         <div id="levelBanner" class="level-banner" aria-live="polite"></div>
@@ -45,7 +35,7 @@
         <p id="finalScore">0</p>
         <img
           class="turn-finished-card"
-          src="assets/69A39B0B-D18B-4B40-ADF7-2D7F40224E62.png"
+          src="assets/IMG_0296.png"
           alt="Turn finished card"
         />
         <div class="button-row">
