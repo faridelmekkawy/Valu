@@ -93,6 +93,7 @@ let audioCtx;
 let musicGain;
 let sfxGain;
 let gameplayLoopNodes;
+let nextWakaAt = 0;
 
 const particles = [];
 const coins = [];
@@ -107,7 +108,7 @@ const LEVELS = [
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
 
-function ensureAudioReady() {
+async function ensureAudioReady() {
   if (!audioCtx) {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return false;
@@ -121,7 +122,7 @@ function ensureAudioReady() {
   }
 
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+    await audioCtx.resume();
   }
 
   return true;
@@ -147,6 +148,13 @@ function playSparkieZap() {
   if (!audioCtx || !sfxGain) return;
   playSparkieTone({ freq: 490, type: 'triangle', dur: 0.08, volume: 0.12 });
   playSparkieTone({ freq: 730, type: 'sawtooth', dur: 0.06, volume: 0.06, startAt: 0.012 });
+}
+
+function playWaka(now = performance.now()) {
+  if (!audioCtx || !sfxGain || now < nextWakaAt) return;
+  nextWakaAt = now + 74;
+  const freq = Math.random() < 0.5 ? 420 : 520;
+  playSparkieTone({ freq, type: 'square', dur: 0.048, volume: 0.06 });
 }
 
 function playHitAlarm() {
@@ -175,30 +183,30 @@ function startGameplayLoop() {
 
   const baseOsc = audioCtx.createOscillator();
   const baseGain = audioCtx.createGain();
-  baseOsc.type = 'triangle';
-  baseOsc.frequency.setValueAtTime(92, now);
+  baseOsc.type = 'sawtooth';
+  baseOsc.frequency.setValueAtTime(80, now);
   baseGain.gain.setValueAtTime(0.0001, now);
-  baseGain.gain.exponentialRampToValueAtTime(0.08, now + 1.1);
+  baseGain.gain.exponentialRampToValueAtTime(0.04, now + 0.75);
 
   const shimmerOsc = audioCtx.createOscillator();
   const shimmerGain = audioCtx.createGain();
-  shimmerOsc.type = 'sine';
-  shimmerOsc.frequency.setValueAtTime(184, now);
-  shimmerGain.gain.setValueAtTime(0.022, now);
+  shimmerOsc.type = 'square';
+  shimmerOsc.frequency.setValueAtTime(250, now);
+  shimmerGain.gain.setValueAtTime(0.012, now);
 
   const shimmerLfo = audioCtx.createOscillator();
   const shimmerLfoGain = audioCtx.createGain();
   shimmerLfo.type = 'sine';
-  shimmerLfo.frequency.setValueAtTime(0.65, now);
-  shimmerLfoGain.gain.setValueAtTime(20, now);
+  shimmerLfo.frequency.setValueAtTime(2.2, now);
+  shimmerLfoGain.gain.setValueAtTime(38, now);
   shimmerLfo.connect(shimmerLfoGain);
   shimmerLfoGain.connect(shimmerOsc.frequency);
 
   const pulse = audioCtx.createOscillator();
   const pulseGain = audioCtx.createGain();
-  pulse.type = 'square';
-  pulse.frequency.setValueAtTime(2, now);
-  pulseGain.gain.setValueAtTime(0.012, now);
+  pulse.type = 'sine';
+  pulse.frequency.setValueAtTime(1.9, now);
+  pulseGain.gain.setValueAtTime(0.01, now);
 
   baseOsc.connect(baseGain);
   shimmerOsc.connect(shimmerGain);
@@ -397,6 +405,7 @@ function resetGame() {
   speedBoostUntil = 0;
   levelTransitionUntil = 0;
   remainingTime = currentLevelConfig().timeLimit;
+  nextWakaAt = 0;
   setupLevel(true);
 }
 
@@ -477,6 +486,7 @@ function updatePlayer(dt, now) {
     if (Math.hypot(player.x - dots[i].x, player.y - dots[i].y) < player.r + 5) {
       score += 1;
       dots.splice(i, 1);
+      playWaka(now);
     }
   }
 
@@ -707,6 +717,8 @@ function tick(ts) {
 }
 
 async function startGame() {
+  await ensureAudioReady();
+
   if (autoHomeTimeout) {
     clearTimeout(autoHomeTimeout);
     autoHomeTimeout = 0;
@@ -736,7 +748,6 @@ async function startGame() {
 
   await upsertSessionWithQueue(currentSessionId, sessionPayload, { merge: false });
   refreshPlayerPreview();
-  ensureAudioReady();
   playSparkieZap();
   startGameplayLoop();
 
@@ -801,7 +812,10 @@ document.addEventListener('keydown', (e) => {
 
   if ((e.code === 'Space' || key === ' ') && gameState === 'menu') {
     e.preventDefault();
-    if (!e.repeat) startGame();
+    if (!e.repeat) {
+      ensureAudioReady();
+      startGame();
+    }
     return;
   }
 
@@ -845,9 +859,12 @@ canvas.addEventListener('pointerup', stopTouch);
 canvas.addEventListener('pointercancel', stopTouch);
 canvas.addEventListener('pointerleave', stopTouch);
 
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('playAgainBtn').addEventListener('click', () => {
-  ensureAudioReady();
+document.getElementById('startBtn').addEventListener('click', async () => {
+  await ensureAudioReady();
+  startGame();
+});
+document.getElementById('playAgainBtn').addEventListener('click', async () => {
+  await ensureAudioReady();
   playSparkieTone({ freq: 360, type: 'triangle', dur: 0.08, volume: 0.1 });
   goHome(true);
 });
