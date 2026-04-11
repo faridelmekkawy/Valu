@@ -89,6 +89,10 @@ let currentSessionId = '';
 let speedBoostUntil = 0;
 let levelTransitionUntil = 0;
 let autoHomeTimeout = 0;
+let audioCtx;
+let musicGain;
+let sfxGain;
+let gameplayLoopNodes;
 
 const particles = [];
 const coins = [];
@@ -102,6 +106,135 @@ const LEVELS = [
 ];
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
+
+function ensureAudioReady() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+    audioCtx = new Ctx();
+    musicGain = audioCtx.createGain();
+    sfxGain = audioCtx.createGain();
+    musicGain.gain.value = 0.18;
+    sfxGain.gain.value = 0.27;
+    musicGain.connect(audioCtx.destination);
+    sfxGain.connect(audioCtx.destination);
+  }
+
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  return true;
+}
+
+function playSparkieTone({ freq = 330, type = 'sine', dur = 0.12, volume = 0.15, startAt = 0 }) {
+  if (!audioCtx || !sfxGain) return;
+  const now = audioCtx.currentTime + startAt;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + Math.max(0.01, dur * 0.18));
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  osc.connect(gain);
+  gain.connect(sfxGain);
+  osc.start(now);
+  osc.stop(now + dur + 0.02);
+}
+
+function playSparkieZap() {
+  if (!audioCtx || !sfxGain) return;
+  playSparkieTone({ freq: 490, type: 'triangle', dur: 0.08, volume: 0.12 });
+  playSparkieTone({ freq: 730, type: 'sawtooth', dur: 0.06, volume: 0.06, startAt: 0.012 });
+}
+
+function playHitAlarm() {
+  if (!audioCtx || !sfxGain) return;
+  playSparkieTone({ freq: 190, type: 'square', dur: 0.16, volume: 0.15 });
+  playSparkieTone({ freq: 140, type: 'triangle', dur: 0.2, volume: 0.1, startAt: 0.035 });
+}
+
+function playLevelUpSting() {
+  if (!audioCtx || !sfxGain) return;
+  [420, 560, 760].forEach((freq, i) => {
+    playSparkieTone({ freq, type: 'triangle', dur: 0.12, volume: 0.13, startAt: i * 0.08 });
+  });
+}
+
+function playGameOverSting() {
+  if (!audioCtx || !sfxGain) return;
+  [300, 230, 170].forEach((freq, i) => {
+    playSparkieTone({ freq, type: 'sawtooth', dur: 0.19, volume: 0.12, startAt: i * 0.1 });
+  });
+}
+
+function startGameplayLoop() {
+  if (!audioCtx || !musicGain || gameplayLoopNodes) return;
+  const now = audioCtx.currentTime;
+
+  const baseOsc = audioCtx.createOscillator();
+  const baseGain = audioCtx.createGain();
+  baseOsc.type = 'triangle';
+  baseOsc.frequency.setValueAtTime(92, now);
+  baseGain.gain.setValueAtTime(0.0001, now);
+  baseGain.gain.exponentialRampToValueAtTime(0.08, now + 1.1);
+
+  const shimmerOsc = audioCtx.createOscillator();
+  const shimmerGain = audioCtx.createGain();
+  shimmerOsc.type = 'sine';
+  shimmerOsc.frequency.setValueAtTime(184, now);
+  shimmerGain.gain.setValueAtTime(0.022, now);
+
+  const shimmerLfo = audioCtx.createOscillator();
+  const shimmerLfoGain = audioCtx.createGain();
+  shimmerLfo.type = 'sine';
+  shimmerLfo.frequency.setValueAtTime(0.65, now);
+  shimmerLfoGain.gain.setValueAtTime(20, now);
+  shimmerLfo.connect(shimmerLfoGain);
+  shimmerLfoGain.connect(shimmerOsc.frequency);
+
+  const pulse = audioCtx.createOscillator();
+  const pulseGain = audioCtx.createGain();
+  pulse.type = 'square';
+  pulse.frequency.setValueAtTime(2, now);
+  pulseGain.gain.setValueAtTime(0.012, now);
+
+  baseOsc.connect(baseGain);
+  shimmerOsc.connect(shimmerGain);
+  pulse.connect(pulseGain);
+  baseGain.connect(musicGain);
+  shimmerGain.connect(musicGain);
+  pulseGain.connect(musicGain);
+
+  baseOsc.start(now);
+  shimmerOsc.start(now);
+  shimmerLfo.start(now);
+  pulse.start(now);
+
+  gameplayLoopNodes = { baseOsc, baseGain, shimmerOsc, shimmerGain, shimmerLfo, pulse, pulseGain };
+}
+
+function stopGameplayLoop() {
+  if (!audioCtx || !musicGain || !gameplayLoopNodes) return;
+  const now = audioCtx.currentTime;
+  gameplayLoopNodes.baseGain.gain.cancelScheduledValues(now);
+  gameplayLoopNodes.baseGain.gain.setValueAtTime(gameplayLoopNodes.baseGain.gain.value, now);
+  gameplayLoopNodes.baseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+  gameplayLoopNodes.shimmerGain.gain.cancelScheduledValues(now);
+  gameplayLoopNodes.shimmerGain.gain.setValueAtTime(gameplayLoopNodes.shimmerGain.gain.value, now);
+  gameplayLoopNodes.shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+  gameplayLoopNodes.pulseGain.gain.cancelScheduledValues(now);
+  gameplayLoopNodes.pulseGain.gain.setValueAtTime(gameplayLoopNodes.pulseGain.gain.value, now);
+  gameplayLoopNodes.pulseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+  const stopAt = now + 0.4;
+  gameplayLoopNodes.baseOsc.stop(stopAt);
+  gameplayLoopNodes.shimmerOsc.stop(stopAt);
+  gameplayLoopNodes.shimmerLfo.stop(stopAt);
+  gameplayLoopNodes.pulse.stop(stopAt);
+  gameplayLoopNodes = null;
+}
 
 function readPlayerCounter() {
   const raw = Number(localStorage.getItem(PLAYER_COUNTER_KEY));
@@ -283,6 +416,7 @@ function advanceLevel(now) {
   levelStartTime = levelTransitionUntil;
   levelBanner.textContent = `Level ${completedLevel} Completed!`;
   levelBanner.classList.add('show');
+  playLevelUpSting();
 }
 
 function updateHud() {
@@ -297,6 +431,14 @@ function collectCoin(index) {
   const c = coins[index];
   score += coinDefs[c.type].value;
   if (c.type === 'wink') speedBoostUntil = performance.now() + 4500;
+  const sparkFreq = {
+    heart: 520,
+    wink: 700,
+    card: 580,
+    token: 840
+  };
+  playSparkieTone({ freq: sparkFreq[c.type], type: 'triangle', dur: 0.09, volume: 0.1 });
+  if (c.type === 'token') playSparkieZap();
   for (let i = 0; i < 13; i++) {
     particles.push({ x: c.x, y: c.y, vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120, life: 0.65, color: coinDefs[c.type].color });
   }
@@ -346,6 +488,7 @@ function updatePlayer(dt, now) {
     for (const e of enemies) {
       if (Math.hypot(player.x - e.x, player.y - e.y) < player.r + e.r) {
         lives -= 1;
+        playHitAlarm();
         player.invulnerableUntil = now + 2000;
         const p = startPosition();
         player.x = p.x;
@@ -593,6 +736,9 @@ async function startGame() {
 
   await upsertSessionWithQueue(currentSessionId, sessionPayload, { merge: false });
   refreshPlayerPreview();
+  ensureAudioReady();
+  playSparkieZap();
+  startGameplayLoop();
 
   startScreen.classList.remove('active');
   gameOverScreen.classList.remove('active');
@@ -616,6 +762,7 @@ function goHome(reset = false) {
   startScreen.classList.add('active');
   gameWrap.style.visibility = 'hidden';
   submitStatus.textContent = '';
+  stopGameplayLoop();
   if (reset) resetGame();
 }
 
@@ -639,6 +786,8 @@ async function endGame(won = false) {
   if (currentSessionId) {
     await upsertSessionWithQueue(currentSessionId, endPayload, { merge: true });
   }
+  stopGameplayLoop();
+  if (won) playLevelUpSting(); else playGameOverSting();
 
   submitStatus.textContent = won ? 'You cleared all 3 levels! Returning to home in 5s...' : 'Session saved. Returning to home in 5s...';
 
@@ -698,6 +847,8 @@ canvas.addEventListener('pointerleave', stopTouch);
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('playAgainBtn').addEventListener('click', () => {
+  ensureAudioReady();
+  playSparkieTone({ freq: 360, type: 'triangle', dur: 0.08, volume: 0.1 });
   goHome(true);
 });
 
