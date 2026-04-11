@@ -59,7 +59,8 @@ const coinDefs = {
   heart: { value: 10, rate: 0.52, img: 'assets/coins/coin_heart.png', color: '#57beb1' },
   wink: { value: 30, rate: 0.23, speedBoost: 3.5, img: 'assets/coins/coin_wink.png', color: '#7bf0df' },
   card: { value: 50, rate: 0.18, img: 'assets/coins/coin_card.png', color: '#81d8ce' },
-  token: { value: 100, rate: 0.07, img: 'assets/coins/coin_token.png', color: '#ef5f17' }
+  token: { value: 100, rate: 0.07, img: 'assets/coins/coin_token.png', color: '#ef5f17' },
+  monster: { value: 75, rate: 0.14, img: 'assets/coins/IMG_0195.jpeg', color: '#ff74d4', eatDuration: 6500 }
 };
 
 const assets = {
@@ -70,7 +71,8 @@ const assets = {
     heart: loadImage(coinDefs.heart.img),
     wink: loadImage(coinDefs.wink.img),
     card: loadImage(coinDefs.card.img),
-    token: loadImage(coinDefs.token.img)
+    token: loadImage(coinDefs.token.img),
+    monster: loadImage(coinDefs.monster.img)
   }
 };
 
@@ -87,6 +89,7 @@ let playerName = 'Player';
 let playerNumber = 1;
 let currentSessionId = '';
 let speedBoostUntil = 0;
+let monsterEatUntil = 0;
 let levelTransitionUntil = 0;
 let autoHomeTimeout = 0;
 
@@ -134,7 +137,8 @@ function buildCoinLegend() {
     ['heart', '+10'],
     ['wink', '+30 speed'],
     ['card', '+50'],
-    ['token', '+100']
+    ['token', '+100'],
+    ['monster', 'L3 eat monsters']
   ];
   defs.forEach(([type, label]) => {
     const chip = document.createElement('div');
@@ -207,10 +211,14 @@ function randomOpenPosition() {
 
 function spawnCoin() {
   if (coins.length > 18) return;
-  const roll = Math.random();
+  const availableTypes = level >= 3
+    ? ['heart', 'wink', 'card', 'token', 'monster']
+    : ['heart', 'wink', 'card', 'token'];
+  const rateSum = availableTypes.reduce((sum, key) => sum + coinDefs[key].rate, 0);
+  const roll = Math.random() * rateSum;
   let sum = 0;
-  let type = 'heart';
-  for (const key of Object.keys(coinDefs)) {
+  let type = availableTypes[0];
+  for (const key of availableTypes) {
     sum += coinDefs[key].rate;
     if (roll <= sum) {
       type = key;
@@ -262,6 +270,7 @@ function resetGame() {
   lives = 3;
   level = 1;
   speedBoostUntil = 0;
+  monsterEatUntil = 0;
   levelTransitionUntil = 0;
   remainingTime = currentLevelConfig().timeLimit;
   setupLevel(true);
@@ -276,6 +285,7 @@ function advanceLevel(now) {
   const completedLevel = level;
   level += 1;
   speedBoostUntil = 0;
+  monsterEatUntil = 0;
   remainingTime = currentLevelConfig().timeLimit;
   setupLevel(false);
 
@@ -297,6 +307,7 @@ function collectCoin(index) {
   const c = coins[index];
   score += coinDefs[c.type].value;
   if (c.type === 'wink') speedBoostUntil = performance.now() + 4500;
+  if (c.type === 'monster') monsterEatUntil = performance.now() + coinDefs.monster.eatDuration;
   for (let i = 0; i < 13; i++) {
     particles.push({ x: c.x, y: c.y, vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120, life: 0.65, color: coinDefs[c.type].color });
   }
@@ -343,8 +354,24 @@ function updatePlayer(dt, now) {
   }
 
   if (now > player.invulnerableUntil) {
-    for (const e of enemies) {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const e = enemies[i];
       if (Math.hypot(player.x - e.x, player.y - e.y) < player.r + e.r) {
+        if (now < monsterEatUntil) {
+          score += 120;
+          for (let burst = 0; burst < 15; burst++) {
+            particles.push({
+              x: e.x,
+              y: e.y,
+              vx: (Math.random() - 0.5) * 160,
+              vy: (Math.random() - 0.5) * 160,
+              life: 0.55,
+              color: coinDefs.monster.color
+            });
+          }
+          enemies.splice(i, 1);
+          continue;
+        }
         lives -= 1;
         player.invulnerableUntil = now + 2000;
         const p = startPosition();
@@ -491,6 +518,13 @@ function drawPlayer(now) {
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(0, 0, player.r + 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (now < monsterEatUntil) {
+    ctx.strokeStyle = 'rgba(255,116,212,0.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, player.r + 11, 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.restore();
