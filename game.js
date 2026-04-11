@@ -94,6 +94,7 @@ let musicGain;
 let sfxGain;
 let gameplayLoopNodes;
 let nextWakaAt = 0;
+let wakaFlip = false;
 
 const particles = [];
 const coins = [];
@@ -152,9 +153,10 @@ function playSparkieZap() {
 
 function playWaka(now = performance.now()) {
   if (!audioCtx || !sfxGain || now < nextWakaAt) return;
-  nextWakaAt = now + 74;
-  const freq = Math.random() < 0.5 ? 420 : 520;
-  playSparkieTone({ freq, type: 'square', dur: 0.048, volume: 0.06 });
+  nextWakaAt = now + 80;
+  wakaFlip = !wakaFlip;
+  const freq = wakaFlip ? 560 : 690;
+  playSparkieTone({ freq, type: 'triangle', dur: 0.043, volume: 0.038 });
 }
 
 function playHitAlarm() {
@@ -180,47 +182,63 @@ function playGameOverSting() {
 function startGameplayLoop() {
   if (!audioCtx || !musicGain || gameplayLoopNodes) return;
   const now = audioCtx.currentTime;
+  musicGain.gain.setValueAtTime(0.11, now);
 
   const baseOsc = audioCtx.createOscillator();
   const baseGain = audioCtx.createGain();
-  baseOsc.type = 'sawtooth';
-  baseOsc.frequency.setValueAtTime(80, now);
+  baseOsc.type = 'triangle';
+  baseOsc.frequency.setValueAtTime(104, now);
   baseGain.gain.setValueAtTime(0.0001, now);
-  baseGain.gain.exponentialRampToValueAtTime(0.04, now + 0.75);
+  baseGain.gain.exponentialRampToValueAtTime(0.03, now + 0.8);
 
   const shimmerOsc = audioCtx.createOscillator();
   const shimmerGain = audioCtx.createGain();
-  shimmerOsc.type = 'square';
-  shimmerOsc.frequency.setValueAtTime(250, now);
-  shimmerGain.gain.setValueAtTime(0.012, now);
+  shimmerOsc.type = 'sine';
+  shimmerOsc.frequency.setValueAtTime(208, now);
+  shimmerGain.gain.setValueAtTime(0.008, now);
 
   const shimmerLfo = audioCtx.createOscillator();
   const shimmerLfoGain = audioCtx.createGain();
   shimmerLfo.type = 'sine';
-  shimmerLfo.frequency.setValueAtTime(2.2, now);
-  shimmerLfoGain.gain.setValueAtTime(38, now);
+  shimmerLfo.frequency.setValueAtTime(0.33, now);
+  shimmerLfoGain.gain.setValueAtTime(2.7, now);
   shimmerLfo.connect(shimmerLfoGain);
-  shimmerLfoGain.connect(shimmerOsc.frequency);
+  shimmerLfoGain.connect(baseOsc.frequency);
 
   const pulse = audioCtx.createOscillator();
   const pulseGain = audioCtx.createGain();
   pulse.type = 'sine';
-  pulse.frequency.setValueAtTime(1.9, now);
-  pulseGain.gain.setValueAtTime(0.01, now);
+  pulse.frequency.setValueAtTime(0.17, now);
+  pulseGain.gain.setValueAtTime(0.0025, now);
+  pulse.connect(pulseGain);
+  pulseGain.connect(shimmerGain.gain);
+
+  const toneFilter = audioCtx.createBiquadFilter();
+  toneFilter.type = 'lowpass';
+  toneFilter.frequency.setValueAtTime(780, now);
+  toneFilter.Q.setValueAtTime(0.75, now);
 
   baseOsc.connect(baseGain);
   shimmerOsc.connect(shimmerGain);
-  pulse.connect(pulseGain);
-  baseGain.connect(musicGain);
-  shimmerGain.connect(musicGain);
-  pulseGain.connect(musicGain);
+  baseGain.connect(toneFilter);
+  shimmerGain.connect(toneFilter);
+  toneFilter.connect(musicGain);
 
   baseOsc.start(now);
   shimmerOsc.start(now);
   shimmerLfo.start(now);
   pulse.start(now);
 
-  gameplayLoopNodes = { baseOsc, baseGain, shimmerOsc, shimmerGain, shimmerLfo, pulse, pulseGain };
+  gameplayLoopNodes = {
+    baseOsc,
+    baseGain,
+    shimmerOsc,
+    shimmerGain,
+    shimmerLfo,
+    pulse,
+    pulseGain,
+    toneFilter
+  };
 }
 
 function stopGameplayLoop() {
@@ -406,6 +424,7 @@ function resetGame() {
   levelTransitionUntil = 0;
   remainingTime = currentLevelConfig().timeLimit;
   nextWakaAt = 0;
+  wakaFlip = false;
   setupLevel(true);
 }
 
