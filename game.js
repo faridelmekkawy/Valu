@@ -24,6 +24,7 @@ const finalName = document.getElementById('finalName');
 const finalScore = document.getElementById('finalScore');
 const submitStatus = document.getElementById('submitStatus');
 const levelBanner = document.getElementById('levelBanner');
+const mainArea = document.querySelector('main');
 
 const tileSize = 32;
 const mazeCols = canvas.width / tileSize;
@@ -111,6 +112,27 @@ const LEVELS = [
 ];
 
 const player = { x: 0, y: 0, r: tileSize * 0.34, vx: 0, vy: 0, angle: 0, invulnerableUntil: 0 };
+
+function layoutGameArea() {
+  if (!mainArea || !gameWrap) return;
+
+  const maxWidth = mainArea.clientWidth;
+  const maxHeight = mainArea.clientHeight;
+  if (!maxWidth || !maxHeight) return;
+
+  const aspect = canvas.width / canvas.height;
+  let targetWidth = maxHeight * aspect;
+  let targetHeight = maxHeight;
+
+  if (targetWidth > maxWidth) {
+    targetWidth = maxWidth;
+    targetHeight = targetWidth / aspect;
+  }
+
+  gameWrap.style.width = `${Math.floor(targetWidth)}px`;
+  gameWrap.style.height = `${Math.floor(targetHeight)}px`;
+}
+
 
 async function ensureAudioReady() {
   if (!audioCtx) {
@@ -807,6 +829,7 @@ async function startGame() {
   startScreen.classList.remove('active');
   gameOverScreen.classList.remove('active');
   gameWrap.style.visibility = 'visible';
+  layoutGameArea();
   gameState = 'playing';
   levelStartTime = performance.now();
   lastFrame = levelStartTime;
@@ -825,6 +848,7 @@ function goHome(reset = false) {
   gameOverScreen.classList.remove('active');
   startScreen.classList.add('active');
   gameWrap.style.visibility = 'hidden';
+  layoutGameArea();
   submitStatus.textContent = '';
   stopGameplayLoop();
   if (reset) resetGame();
@@ -911,6 +935,9 @@ const stopTouch = () => {
 canvas.addEventListener('pointerup', stopTouch);
 canvas.addEventListener('pointercancel', stopTouch);
 canvas.addEventListener('pointerleave', stopTouch);
+
+window.addEventListener('resize', layoutGameArea);
+layoutGameArea();
 
 document.getElementById('startBtn').addEventListener('click', async () => {
   await ensureAudioReady();
